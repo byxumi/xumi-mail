@@ -1,0 +1,13 @@
+node_modules
+.next
+.open-next
+out
+dist
+*.tsbuildinfo
+next-env.d.ts
+.dev.vars
+.env*.local
+wrangler.toml
+wrangler.jsonc.bak
+.DS_Store
+repo/

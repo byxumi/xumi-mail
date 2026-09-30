@@ -1,0 +1,12 @@
+# Local dev vars for `wrangler dev` / `next dev` (NOT committed; this file is example)
+PREFIX=tmp
+DEFAULT_DOMAINS=["example1.com","example2.com"]
+DOMAINS=["example1.com","example2.com"]
+JWT_SECRET=dev-secret-please-change
+ENABLE_USER_CREATE_EMAIL=true
+ENABLE_USER_DELETE_EMAIL=true
+ENABLE_MAIL_READ_STATUS=false
+ENABLE_WEBHOOK=false
+ENABLE_ADDRESS_PASSWORD=false
+AI_EXTRACT_MODE=local
+DEFAULT_LANG=zh

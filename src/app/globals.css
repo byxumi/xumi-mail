@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f8fafc;
+  --fg: #0f172a;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.mail-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.mail-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.mail-content pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 6px;
+}

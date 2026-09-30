@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "xumi-mail",
+  "main": "worker.ts",
+  "compatibility_date": "2025-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "vars": {
+    "PREFIX": "tmp",
+    "DEFAULT_DOMAINS": ["xumimail.click"],
+    "DOMAINS": ["xumimail.click", "xumimail.help"],
+    "JWT_SECRET": "xumi-mail-jwt-secret-9f8e7d6c5b4a3f2e1d0c",
+    "ENABLE_USER_CREATE_EMAIL": "true",
+    "ENABLE_USER_DELETE_EMAIL": "true",
+    "ENABLE_AUTO_REPLY": "false",
+    "ENABLE_MAIL_READ_STATUS": "true",
+    "ENABLE_WEBHOOK": "false",
+    "ENABLE_ADDRESS_PASSWORD": "false",
+    "AI_EXTRACT_MODE": "local",
+    "DEFAULT_LANG": "zh",
+    "COPYRIGHT": "Xumi Mail"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "xumi-mail-db",
+      "database_id": "f214beb5-7987-4260-b44b-3b3a1c80bd2c"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "87a0ca5d87a849f18ed2252e9adc0cdd"
+    }
+  ]
+}
