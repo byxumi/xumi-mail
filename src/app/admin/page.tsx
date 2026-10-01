@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { EmptyState, GroupLabel, FormRow, LoadingButton, Segmented, Switch, Spinner } from "@/components/ui";
+import { EmptyState, GroupLabel, FormRow, LoadingButton, Segmented, Switch, Spinner, Avatar, ConfirmDialog } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
 
@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [cleanup, setCleanup] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-user" | "delete-address"; id?: number; name?: string }>(null);
 
   useEffect(() => {
     if (tokenStore.getAdmin()) {
@@ -174,21 +175,13 @@ export default function AdminPage() {
               const a = await api.adminAddresses({ limit: 50, offset: 0 });
               setAddresses(a.results || []);
             }}
+            onDelete={(addr) => setConfirmAction({ type: "delete-address", id: addr.id, name: addr.name })}
           />
         )}
         {tab === "users" && (
           <UsersView
             users={users}
-            onDelete={async (id) => {
-              if (!window.confirm("确认删除该用户？")) return;
-              try {
-                await api.adminDeleteUser(id);
-                setUsers((prev) => prev.filter((u) => u.id !== id));
-                push("success", "已删除");
-              } catch (e) {
-                push("error", (e as Error).message);
-              }
-            }}
+            onDelete={(u) => setConfirmAction({ type: "delete-user", id: u.id, name: u.user_email })}
           />
         )}
         {tab === "settings" && cleanup && (
@@ -215,6 +208,53 @@ export default function AdminPage() {
           />
         )}
       </main>
+
+      {/* 删除确认 */}
+      <ConfirmDialog
+        open={confirmAction?.type === "delete-user"}
+        title="确认删除该用户？"
+        message={confirmAction?.name ? `用户：${confirmAction.name}` : undefined}
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) {
+            void (async () => {
+              try {
+                await api.adminDeleteUser(confirmAction.id!);
+                setUsers((prev) => prev.filter((u) => u.id !== confirmAction.id));
+                push("success", "已删除");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === "delete-address"}
+        title="确认删除该地址？"
+        message={confirmAction?.name ? `地址：${confirmAction.name}` : undefined}
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) {
+            void (async () => {
+              try {
+                await api.adminDeleteAddress(confirmAction.id!);
+                push("success", "已删除");
+                const a = await api.adminAddresses({ limit: 50, offset: 0 });
+                setAddresses(a.results || []);
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
@@ -231,10 +271,10 @@ function StatsView({ stats }: { stats: any }) {
   return (
     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {items.map((item) => (
-        <div key={item.label} className="card-group p-4">
+        <div key={item.label} className="card-group stat-card p-4">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-xl text-[18px] text-white"
-            style={{ background: item.color }}
+            style={{ background: item.color, boxShadow: `0 6px 16px ${item.color}44` }}
           >
             {item.icon}
           </span>
@@ -287,12 +327,7 @@ function MailsView({
               const sender = extractSender(mail.source || "");
               return (
                 <li key={mail.id} className="card-row">
-                  <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
-                    style={{ background: "#5856d6" }}
-                  >
-                    {(sender.name || sender.email || "?").charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar text={sender.email || sender.name || "?"} size={36} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
                       {(sender.name || sender.email) + " → " + mail.address}
@@ -319,7 +354,7 @@ function MailsView({
 }
 
 /* ---------- 地址管理 ---------- */
-function AddressesAdmin({ addresses, onRefresh }: { addresses: any[]; onRefresh: () => void }) {
+function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; onRefresh: () => void; onDelete: (a: any) => void }) {
   const { push } = useToast();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -362,12 +397,7 @@ function AddressesAdmin({ addresses, onRefresh }: { addresses: any[]; onRefresh:
           <ul>
             {addresses.map((addr) => (
               <li key={addr.id} className="card-row">
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
-                  style={{ background: "#007aff" }}
-                >
-                  {addr.name.charAt(0).toUpperCase()}
-                </span>
+                <Avatar text={addr.name} size={36} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
                     {addr.name}
@@ -377,16 +407,7 @@ function AddressesAdmin({ addresses, onRefresh }: { addresses: any[]; onRefresh:
                   </p>
                 </div>
                 <button
-                  onClick={async () => {
-                    if (!window.confirm(`确认删除地址 ${addr.name}？`)) return;
-                    try {
-                      await api.adminDeleteAddress(addr.id);
-                      push("success", "已删除");
-                      await onRefresh();
-                    } catch (e) {
-                      push("error", (e as Error).message);
-                    }
-                  }}
+                  onClick={() => onDelete(addr)}
                   className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
                   style={{ background: "var(--fill)" }}
                 >
@@ -402,7 +423,7 @@ function AddressesAdmin({ addresses, onRefresh }: { addresses: any[]; onRefresh:
 }
 
 /* ---------- 用户管理 ---------- */
-function UsersView({ users, onDelete }: { users: any[]; onDelete: (id: number) => void }) {
+function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => void }) {
   return (
     <div className="card-group mt-5">
       {users.length === 0 ? (
@@ -411,12 +432,7 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (id: number) =
         <ul>
           {users.map((user) => (
             <li key={user.id} className="card-row">
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
-                style={{ background: "linear-gradient(135deg,#af52de,#5856d6)" }}
-              >
-                {user.user_email?.charAt(0)?.toUpperCase() || "?"}
-              </span>
+              <Avatar text={user.user_email || "?"} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
                   {user.user_email}
@@ -427,7 +443,7 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (id: number) =
                 </p>
               </div>
               <button
-                onClick={() => onDelete(user.id)}
+                onClick={() => onDelete(user)}
                 className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
                 style={{ background: "var(--fill)" }}
               >

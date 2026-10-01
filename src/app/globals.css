@@ -25,12 +25,25 @@
 
   /* 毛玻璃 */
   --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.85);
 
   /* 圆角（iOS 风格层次） */
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 20px;
   --r-xl: 28px;
+
+  /* 阴影层级（iOS 风格柔和阴影） */
+  --shadow-sm: 0 1px 0 rgba(60, 60, 67, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14), 0 3px 8px rgba(0, 0, 0, 0.06);
+
+  /* 动效曲线（iOS spring） */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-fast: 0.15s;
+  --dur-med: 0.25s;
+  --dur-slow: 0.4s;
 }
 
 [data-theme="dark"] {
@@ -43,6 +56,19 @@
   --separator: rgba(84, 84, 88, 0.4);
   --fill: rgba(120, 120, 128, 0.24);
   --glass: rgba(28, 28, 30, 0.72);
+  --glass-strong: rgba(28, 28, 30, 0.88);
+}
+
+/* iOS 安全区适配（刘海屏） */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* 主题切换过渡 */
+html.theme-anim,
+html.theme-anim body {
+  transition: background-color var(--dur-med) var(--ease-out), color var(--dur-med) var(--ease-out);
 }
 
 html,
@@ -92,6 +118,10 @@ textarea {
   backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 0.5px solid var(--separator);
 }
+.glass-bar.scrolled {
+  background: var(--glass-strong);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.08);
+}
 
 /* 大标题（iOS Large Title） */
 .large-title {
@@ -105,7 +135,7 @@ textarea {
 .card-group {
   background: var(--bg-secondary);
   border-radius: var(--r-lg);
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -123,6 +153,12 @@ textarea {
 .card-row.active {
   background: rgba(0, 122, 255, 0.08);
 }
+.card-row:hover {
+  background: var(--bg-tertiary);
+}
+.card-row.pressable:active {
+  background: var(--fill);
+}
 
 /* iOS 分段控件 */
 .segmented {
@@ -139,7 +175,7 @@ textarea {
   font-weight: 500;
   padding: 6px 16px;
   border-radius: 8px;
-  transition: all 0.18s ease;
+  transition: all 0.18s var(--ease-out);
   white-space: nowrap;
 }
 .segmented button.active {
@@ -157,10 +193,10 @@ textarea {
   padding: 14px 20px;
   font-size: 17px;
   font-weight: 600;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.2s ease;
 }
 .btn-primary:hover { opacity: 0.88; }
-.btn-primary:active { transform: scale(0.98); }
+.btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.4; }
 
 /* iOS 次要按钮 */
@@ -188,6 +224,7 @@ textarea {
   outline: none;
   transition: box-shadow 0.15s ease, background 0.15s ease;
 }
+.ios-input:hover { background: var(--fill); }
 .ios-input:focus {
   background: var(--bg-secondary);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
@@ -248,6 +285,15 @@ textarea {
   font-variant-numeric: tabular-nums;
   box-shadow: 0 12px 30px rgba(0, 122, 255, 0.35);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.code-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.25), transparent 55%);
+  pointer-events: none;
 }
 
 /* 通知 */
@@ -256,14 +302,20 @@ textarea {
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-lg);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
-  animation: toast-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: toast-in 0.35s var(--ease-spring);
 }
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(-12px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast-item.leave {
+  animation: toast-out 0.25s var(--ease-out) forwards;
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translateY(-8px) scale(0.95); }
 }
 
 /* 悬浮动作按钮 (FAB) */
@@ -281,12 +333,12 @@ textarea {
   justify-content: center;
   font-size: 26px;
   box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s var(--ease-spring), opacity 0.15s ease, box-shadow 0.2s ease;
   z-index: 30;
   border: none;
 }
 .fab:hover { opacity: 0.9; }
-.fab:active { transform: scale(0.92); }
+.fab:active { transform: scale(0.88); }
 
 /* 空状态 */
 .empty-state {
@@ -332,10 +384,10 @@ textarea {
 
 /* 平滑过渡 */
 .fade-in {
-  animation: fade-in 0.25s ease;
+  animation: fade-in 0.3s var(--ease-out);
 }
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -347,3 +399,137 @@ textarea {
   transform: scale(0.97);
   opacity: 0.85;
 }
+
+/* ============ 新增 iOS 组件 ============ */
+
+/* 底部抽屉（iOS Sheet） */
+.sheet-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: sheet-mask-in 0.25s var(--ease-out);
+}
+.sheet-mask.align-center { align-items: center; }
+@keyframes sheet-mask-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sheet-panel {
+  width: 100%;
+  max-width: 520px;
+  background: var(--bg-secondary);
+  border-radius: 24px 24px 0 0;
+  box-shadow: var(--shadow-lg);
+  animation: sheet-up 0.35s var(--ease-spring);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.sheet-panel.centered { border-radius: 24px; margin: 0 12px; }
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-grabber {
+  width: 38px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--fill);
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+/* 列表项交错渐入 */
+@keyframes list-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.list-item-in {
+  animation: list-in 0.3s var(--ease-out) both;
+}
+
+/* 骨架屏 */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--fill) 25%, var(--bg-tertiary) 50%, var(--fill) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* 头像渐变光环 */
+.avatar-ring {
+  position: relative;
+}
+.avatar-ring::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255,255,255,0.35), transparent 40%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.avatar-ring:hover::after { opacity: 1; }
+
+/* 搜索框 */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--r-sm);
+  padding: 0 12px;
+  height: 38px;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.search-box:focus-within {
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.22);
+}
+.search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--fg);
+}
+
+/* 邮箱胶囊 */
+.address-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--separator);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+.address-chip:hover { box-shadow: var(--shadow-md); }
+.address-chip:active { transform: scale(0.99); }
+
+/* 统计数字卡片 hover 抬升 */
+.stat-card {
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 平滑滚动到顶 */
+html { scroll-behavior: smooth; }
+
+/* 移动端 FAB 底部安全区 */
+.fab { bottom: calc(24px + env(safe-area-inset-bottom)); }

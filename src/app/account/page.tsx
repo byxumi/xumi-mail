@@ -5,11 +5,13 @@ import Header from "@/components/Header";
 import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
+import { useTheme } from "@/hooks/useTheme";
 import { api, sha256Hex, tokenStore } from "@/lib/client";
 
 export default function AccountPage() {
   const { push } = useToast();
   const copy = useCopy();
+  const { theme, pureDark, setTheme, setPureDark } = useTheme();
   const { settings } = useSettings();
   const { token, clear } = useAddressToken();
 
@@ -206,6 +208,49 @@ export default function AccountPage() {
                 <FormRow icon="🪝" label="Webhook 通知" onClick={() => setShowWebhook((v) => !v)} />
               )}
               <FormRow icon="👤" label="用户账号" onClick={() => setShowUser((v) => !v)} />
+            </div>
+
+            {/* 外观设置 */}
+            <GroupLabel>外观</GroupLabel>
+            <div className="card-group">
+              <div className="card-row justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[14px]" style={{ background: "var(--fill)" }}>
+                    🎨
+                  </span>
+                  <span className="text-[16px]" style={{ color: "var(--fg)" }}>
+                    主题
+                  </span>
+                </div>
+                <div className="segmented">
+                  {(
+                    [
+                      { v: "system", label: "跟随系统" },
+                      { v: "light", label: "浅色" },
+                      { v: "dark", label: "深色" },
+                    ] as const
+                  ).map((o) => (
+                    <button
+                      key={o.v}
+                      className={theme === o.v ? "active" : ""}
+                      onClick={() => setTheme(o.v)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="card-row justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[14px]" style={{ background: "var(--fill)" }}>
+                    🌑
+                  </span>
+                  <span className="flex-1 text-[16px]" style={{ color: "var(--fg)" }}>
+                    纯黑 OLED 模式
+                  </span>
+                </div>
+                <Switch checked={pureDark} onChange={setPureDark} />
+              </div>
             </div>
 
             {/* 地址密码面板 */}

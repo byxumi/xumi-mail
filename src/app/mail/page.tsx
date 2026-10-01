@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/Header";
-import { EmptyState, LoadingButton, Spinner, Segmented, useCopy } from "@/components/ui";
+import { EmptyState, LoadingButton, Spinner, Segmented, useCopy, SearchInput, ConfirmDialog } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings, useInterval } from "@/hooks/useSettings";
 import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex } from "@/lib/client";
@@ -25,6 +25,36 @@ export default function MailPage() {
   const [tab, setTab] = useState<"inbox" | "sent">("inbox");
   const [sent, setSent] = useState<any[]>([]);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-mail" | "clear-inbox" | "delete-sent"; id?: number }>(null);
+
+  const unreadCount = useMemo(() => inbox.filter((m) => m.is_unread === 1).length, [inbox]);
+
+  // 同步未读数到 Header 徽标（跨页面）
+  useEffect(() => {
+    try {
+      localStorage.setItem("tm_unread_count", String(unreadCount));
+      window.dispatchEvent(new Event("tm-unread-updated"));
+    } catch {
+      // ignore
+    }
+  }, [unreadCount]);
+
+  // 本地搜索过滤
+  const searchFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return inbox;
+    return inbox.filter((m) => {
+      const sender = extractSender(m.sender);
+      return (
+        (sender.name || "").toLowerCase().includes(q) ||
+        (sender.email || "").toLowerCase().includes(q) ||
+        (m.subject || "").toLowerCase().includes(q) ||
+        (m.text || "").toLowerCase().includes(q) ||
+        (m.address || "").toLowerCase().includes(q)
+      );
+    });
+  }, [inbox, search]);
 
   // 拉取邮件列表
   const loadMails = useCallback(async () => {
@@ -96,7 +126,6 @@ export default function MailPage() {
   };
 
   const deleteMail = async (id: number) => {
-    if (!window.confirm("删除这封邮件？")) return;
     try {
       await api.deleteMail(id);
       setInbox((prev) => prev.filter((m) => m.id !== id));
@@ -108,7 +137,6 @@ export default function MailPage() {
   };
 
   const clearInbox = async () => {
-    if (!window.confirm("确认清空收件箱？所有邮件将被删除。")) return;
     try {
       await api.clearInbox();
       setInbox([]);
@@ -116,6 +144,34 @@ export default function MailPage() {
       push("success", "收件箱已清空");
     } catch (e) {
       push("error", (e as Error).message);
+    }
+  };
+
+  /** 标记已读 / 未读（乐观更新） */
+  const setMailRead = async (id: number, isUnread: boolean) => {
+    setInbox((prev) => prev.map((m) => (m.id === id ? { ...m, is_unread: isUnread ? 1 : 0 } : m)));
+    try {
+      await api.markRead(id, isUnread);
+    } catch (e) {
+      push("error", (e as Error).message);
+      await loadMails();
+    }
+  };
+
+  /** 全部标为已读 */
+  const markAllRead = async () => {
+    const unread = inbox.filter((m) => m.is_unread === 1);
+    if (unread.length === 0) {
+      push("info", "没有未读邮件");
+      return;
+    }
+    setInbox((prev) => prev.map((m) => ({ ...m, is_unread: 0 })));
+    try {
+      await Promise.all(unread.map((m) => api.markRead(m.id, false)));
+      push("success", `已将 ${unread.length} 封邮件标为已读`);
+    } catch (e) {
+      push("error", (e as Error).message);
+      await loadMails();
     }
   };
 
@@ -280,6 +336,16 @@ export default function MailPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {tab === "inbox" && unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="pressable shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium"
+                style={{ background: "var(--fill)", color: "var(--accent)" }}
+                title="全部标为已读"
+              >
+                ✓ 全部已读
+              </button>
+            )}
             <Segmented
               value={tab}
               onChange={(v) => {
@@ -299,32 +365,84 @@ export default function MailPage() {
           <AddressChip address={token ? (inbox[0]?.address || "") : ""} onCopy={copy} />
         </div>
 
+        {tab === "inbox" && (
+          <div className="mt-3">
+            <SearchInput value={search} onChange={setSearch} placeholder="搜索发件人、主题、内容…" />
+          </div>
+        )}
+
         {tab === "inbox" ? (
           <InboxView
-            inbox={inbox}
+            inbox={searchFiltered}
             loading={loading}
             selectedId={selectedId}
             onSelect={(id) => {
               setSelectedId(id);
               setMobileDetailOpen(true);
+              void setMailRead(id, false);
             }}
-            onDelete={deleteMail}
-            onClear={clearInbox}
+            onDelete={(id) => setConfirmAction({ type: "delete-mail", id })}
+            onClear={() => setConfirmAction({ type: "clear-inbox" })}
             selectedMail={selectedMail}
             settings={settings}
+            mobileDetailOpen={mobileDetailOpen}
+            onCloseMobile={() => setMobileDetailOpen(false)}
+            onToggleRead={async (id, isUnread) => {
+              await setMailRead(id, isUnread);
+              if (isUnread) setSelectedId(null);
+            }}
           />
         ) : (
-          <SentView sent={sent} onDelete={async (id) => {
-            try {
-              await api.deleteSent(id);
-              await loadSent();
-              push("success", "已删除");
-            } catch (e) {
-              push("error", (e as Error).message);
-            }
-          }} />
+          <SentView sent={sent} onDelete={(id) => setConfirmAction({ type: "delete-sent", id })} />
         )}
       </main>
+
+      {/* 已读/未读确认弹窗 */}
+      <ConfirmDialog
+        open={confirmAction?.type === "delete-mail"}
+        title="删除这封邮件？"
+        message="删除后不可恢复。"
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) void deleteMail(confirmAction.id);
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === "clear-inbox"}
+        title="确认清空收件箱？"
+        message="所有邮件将被删除，不可恢复。"
+        confirmText="清空"
+        danger
+        onConfirm={() => {
+          void clearInbox();
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === "delete-sent"}
+        title="删除这封已发送邮件？"
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) {
+            void (async () => {
+              try {
+                await api.deleteSent(confirmAction.id!);
+                await loadSent();
+                push("success", "已删除");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
@@ -359,6 +477,9 @@ function InboxView({
   onClear,
   selectedMail,
   settings,
+  mobileDetailOpen,
+  onCloseMobile,
+  onToggleRead,
 }: {
   inbox: ParsedMailDTO[];
   loading: boolean;
@@ -368,6 +489,9 @@ function InboxView({
   onClear: () => void;
   selectedMail: ParsedMailDTO | null;
   settings: any;
+  mobileDetailOpen: boolean;
+  onCloseMobile: () => void;
+  onToggleRead: (id: number, isUnread: boolean) => void;
 }) {
   const copy = useCopy();
 
@@ -387,7 +511,7 @@ function InboxView({
           />
         ) : (
           <ul className="h-full overflow-y-auto">
-            {inbox.map((mail) => {
+            {inbox.map((mail, i) => {
               const sender = extractSender(mail.sender);
               return (
                 <MailListItem
@@ -396,6 +520,7 @@ function InboxView({
                   sender={sender}
                   active={selectedId === mail.id}
                   onClick={() => onSelect(mail.id)}
+                  index={i}
                 />
               );
             })}
@@ -403,8 +528,8 @@ function InboxView({
         )}
       </div>
 
-      {/* 邮件详情（桌面常驻，移动端覆盖） */}
-      <div className="card-group min-h-[320px] lg:h-[calc(100vh-200px)]">
+      {/* 邮件详情（桌面常驻） */}
+      <div className="card-group hidden min-h-[320px] lg:block lg:h-[calc(100vh-200px)]">
         {!selectedMail ? (
           <div className="flex h-full flex-col items-center justify-center py-24" style={{ color: "var(--fg-tertiary)" }}>
             <div className="text-5xl opacity-60">✉️</div>
@@ -416,9 +541,43 @@ function InboxView({
             onDelete={() => onDelete(selectedMail.id)}
             onCopy={copy}
             settings={settings}
+            onToggleRead={onToggleRead}
           />
         )}
       </div>
+
+      {/* 移动端全屏详情 */}
+      {mobileDetailOpen && selectedMail && (
+        <div className="fixed inset-0 z-40 flex flex-col lg:hidden">
+          <div
+            className="flex h-12 shrink-0 items-center justify-between px-3"
+            style={{ background: "var(--glass)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "0.5px solid var(--separator)" }}
+          >
+            <button
+              onClick={onCloseMobile}
+              className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[16px]"
+              style={{ background: "var(--fill)" }}
+              aria-label="返回"
+            >
+              ←
+            </button>
+            <span className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>邮件详情</span>
+            <span className="w-8" />
+          </div>
+          <div className="min-h-0 flex-1">
+            <MailDetail
+              mail={selectedMail}
+              onDelete={() => {
+                onCloseMobile();
+                onDelete(selectedMail.id);
+              }}
+              onCopy={copy}
+              settings={settings}
+              onToggleRead={onToggleRead}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -428,14 +587,20 @@ function MailListItem({
   sender,
   active,
   onClick,
+  index = 0,
 }: {
   mail: ParsedMailDTO;
   sender: { name: string; email: string };
   active: boolean;
   onClick: () => void;
+  index?: number;
 }) {
+  const isUnread = mail.is_unread === 1;
   return (
-    <li>
+    <li
+      className="list-item-in"
+      style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+    >
       <button onClick={onClick} className={`card-row w-full text-left ${active ? "active" : ""}`}>
         {/* 头像 */}
         <span
@@ -454,10 +619,10 @@ function MailListItem({
             </span>
           </span>
           <span className="mt-0.5 flex items-center gap-1.5">
-            {mail.is_unread === 1 && (
+            {isUnread && (
               <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: "var(--accent)" }} />
             )}
-            <span className="truncate text-[14px]" style={{ color: mail.is_unread === 1 ? "var(--fg)" : "var(--fg-secondary)" }}>
+            <span className={`truncate text-[14px] ${isUnread ? "font-medium" : ""}`} style={{ color: isUnread ? "var(--fg)" : "var(--fg-secondary)" }}>
               {mail.subject || "(无主题)"}
             </span>
           </span>
@@ -475,11 +640,13 @@ function MailDetail({
   onDelete,
   onCopy,
   settings,
+  onToggleRead,
 }: {
   mail: ParsedMailDTO;
   onDelete: () => void;
   onCopy: (text: string, label?: string) => void;
   settings: any;
+  onToggleRead?: (id: number, isUnread: boolean) => void;
 }) {
   const sender = extractSender(mail.sender);
   const meta = useExtractMeta(mail.metadata);
@@ -492,14 +659,26 @@ function MailDetail({
           <h2 className="text-[18px] font-bold leading-snug" style={{ color: "var(--fg)" }}>
             {mail.subject || "(无主题)"}
           </h2>
-          <button
-            onClick={onDelete}
-            className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px]"
-            style={{ background: "var(--fill)" }}
-            title="删除"
-          >
-            🗑️
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {onToggleRead && (
+              <button
+                onClick={() => onToggleRead(mail.id, mail.is_unread !== 1)}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[15px]"
+                style={{ background: mail.is_unread === 1 ? "rgba(0,122,255,0.15)" : "var(--fill)" }}
+                title={mail.is_unread === 1 ? "标为已读" : "标为未读"}
+              >
+                {mail.is_unread === 1 ? "⚪" : "◉"}
+              </button>
+            )}
+            <button
+              onClick={onDelete}
+              className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px]"
+              style={{ background: "var(--fill)" }}
+              title="删除"
+            >
+              🗑️
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 flex items-center gap-3">

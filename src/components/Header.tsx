@@ -4,14 +4,42 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tokenStore } from "@/lib/client";
 import { useTheme } from "@/hooks/useTheme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /** iOS 风格毛玻璃导航栏 */
 export default function Header() {
   const pathname = usePathname();
   const hasAddress = typeof window !== "undefined" && !!tokenStore.getAddress();
-  const { theme, setTheme } = useTheme();
+  const { colorScheme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  // 滚动时加深毛玻璃
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // 未读徽标：监听本地存储变化（跨页面同步）
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setUnread(parseInt(localStorage.getItem("tm_unread_count") || "0", 10) || 0);
+      } catch {
+        setUnread(0);
+      }
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    window.addEventListener("tm-unread-updated", sync as EventListener);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("tm-unread-updated", sync as EventListener);
+    };
+  }, []);
 
   const handleLogout = () => {
     tokenStore.clearAddress();
@@ -21,14 +49,14 @@ export default function Header() {
   const isActive = (p: string) => pathname?.startsWith(p);
 
   const navItems = [
-    { href: "/mail", label: "收件箱", icon: "📥" },
-    { href: "/send", label: "发件", icon: "📤" },
-    { href: "/account", label: "账号", icon: "⚙️" },
-    { href: "/admin", label: "管理", icon: "🛡️" },
+    { href: "/mail", label: "收件箱", icon: "📥", badge: unread },
+    { href: "/send", label: "发件", icon: "📤", badge: 0 },
+    { href: "/account", label: "账号", icon: "⚙️", badge: 0 },
+    { href: "/admin", label: "管理", icon: "🛡️", badge: 0 },
   ];
 
   return (
-    <header className="glass-bar sticky top-0 z-30">
+    <header className={`glass-bar sticky top-0 z-30 ${scrolled ? "scrolled" : ""}`}>
       <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
@@ -47,7 +75,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-full px-4 py-1.5 text-[15px] transition-all ${
+              className={`relative rounded-full px-4 py-1.5 text-[15px] transition-all ${
                 isActive(item.href)
                   ? "font-semibold"
                   : "opacity-60 hover:opacity-90"
@@ -56,6 +84,14 @@ export default function Header() {
             >
               <span className="mr-1">{item.icon}</span>
               {item.label}
+              {item.badge > 0 && (
+                <span
+                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                  style={{ background: "var(--red)" }}
+                >
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -63,12 +99,12 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {/* 主题切换 */}
           <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={toggleTheme}
             className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[16px]"
             style={{ background: "var(--fill)" }}
             title="切换深浅色"
           >
-            {theme === "dark" ? "☀️" : "🌙"}
+            {colorScheme === "dark" ? "☀️" : "🌙"}
           </button>
 
           {hasAddress ? (
@@ -118,6 +154,14 @@ export default function Header() {
               >
                 <span>{item.icon}</span>
                 {item.label}
+                {item.badge > 0 && (
+                  <span
+                    className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white"
+                    style={{ background: "var(--red)" }}
+                  >
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                )}
               </Link>
             ))}
             {hasAddress ? (

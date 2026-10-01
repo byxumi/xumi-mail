@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { api, formatTime } from "@/lib/client";
+
+const RECENT_KEY = "tm_recent_recipients";
+
+function loadRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]") as string[];
+  } catch {
+    return [];
+  }
+}
 
 export default function SendPage() {
   const { push } = useToast();
@@ -20,6 +30,11 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [sentList, setSentList] = useState<any[]>([]);
   const [address, setAddress] = useState("");
+  const [recent, setRecent] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRecent(loadRecent());
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -30,13 +45,23 @@ export default function SendPage() {
     void loadSent();
   }, [token]);
 
-  const loadSent = async () => {
+  const loadSent = useCallback(async () => {
     try {
       const res = await api.sendbox({ limit: 20, offset: 0 });
       setSentList(res.results);
     } catch {
       // ignore
     }
+  }, []);
+
+  const rememberRecipient = (mail: string) => {
+    const list = [mail, ...loadRecent().filter((r) => r.toLowerCase() !== mail.toLowerCase())].slice(0, 5);
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+    } catch {
+      // ignore
+    }
+    setRecent(list);
   };
 
   const send = async () => {
@@ -54,6 +79,7 @@ export default function SendPage() {
         is_html: isHtml,
       });
       push("success", "发送成功");
+      rememberRecipient(toMail.trim());
       setToMail("");
       setSubject("");
       setContent("");
@@ -125,6 +151,25 @@ export default function SendPage() {
               style={{ color: "var(--fg)" }}
             />
           </div>
+
+          {/* 最近收件人 */}
+          {recent.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                最近：
+              </span>
+              {recent.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setToMail(r)}
+                  className="pressable rounded-full px-2.5 py-0.5 text-[12px] font-medium"
+                  style={{ background: "var(--fill)", color: "var(--accent)" }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="mt-3 flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
             <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>

@@ -306,14 +306,28 @@ export const sha256Hex = async (text: string): Promise<string> => {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
+/** 相对时间（iOS 风格：刚刚 / n 分钟前 / n 小时前 / 昨天 / 日期） */
 export function formatTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
   const fmt = (n: number) => String(n).padStart(2, "0");
-  if (sameDay) {
-    return `${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+
+  if (diffMin < 1) return "刚刚";
+  if (diffMin < 60) return `${diffMin} 分钟前`;
+
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return `${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return `昨天 ${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+
+  const sameYear = d.getFullYear() === now.getFullYear();
+  if (sameYear) {
+    return `${fmt(d.getMonth() + 1)}-${fmt(d.getDate())} ${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
   }
   return `${d.getFullYear()}-${fmt(d.getMonth() + 1)}-${fmt(d.getDate())} ${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
 }
