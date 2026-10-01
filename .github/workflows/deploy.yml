@@ -60,7 +60,9 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         # 基于 wrangler.jsonc 部署（全新 Worker xumi-mail + D1 + KV + assets）
-        run: npx wrangler deploy
+        # ADMIN_PASSWORDS 从 GitHub Actions Secret 注入（不进公开仓库），
+        # 配合 keep_vars: true，后续部署也会保留该变量
+        run: npx wrangler deploy --var ADMIN_PASSWORDS:"${{ secrets.ADMIN_PASSWORDS }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
