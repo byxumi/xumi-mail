@@ -16,6 +16,7 @@ export default function SendPage() {
   const [toMail, setToMail] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [isHtml, setIsHtml] = useState(false);
   const [sending, setSending] = useState(false);
   const [sentList, setSentList] = useState<any[]>([]);
   const [address, setAddress] = useState("");
@@ -50,6 +51,7 @@ export default function SendPage() {
         to_mail: toMail.trim(),
         subject: subject.trim(),
         content,
+        is_html: isHtml,
       });
       push("success", "发送成功");
       setToMail("");
@@ -67,8 +69,9 @@ export default function SendPage() {
     return (
       <div className="min-h-screen">
         <Header />
-        <div className="mx-auto max-w-xl px-4 py-20 text-center text-slate-500">
-          请先创建邮箱地址后再发件。
+        <div className="mx-auto max-w-md px-4 py-20 text-center" style={{ color: "var(--fg-secondary)" }}>
+          <div className="text-5xl">📤</div>
+          <p className="mt-4 text-[16px]">请先创建邮箱地址后再发件</p>
         </div>
       </div>
     );
@@ -78,8 +81,9 @@ export default function SendPage() {
     return (
       <div className="min-h-screen">
         <Header />
-        <div className="mx-auto max-w-xl px-4 py-20 text-center text-slate-500">
-          管理员未启用发件功能（需要配置 Resend / SMTP / SEND_MAIL）。
+        <div className="mx-auto max-w-md px-4 py-20 text-center" style={{ color: "var(--fg-secondary)" }}>
+          <div className="text-5xl">🚫</div>
+          <p className="mt-4 text-[16px]">管理员未启用发件功能（需配置 Resend / SMTP / SEND_MAIL）</p>
         </div>
       </div>
     );
@@ -88,90 +92,123 @@ export default function SendPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-xl font-bold text-slate-900">发送邮件</h1>
-        <p className="mt-0.5 text-sm text-slate-500">
-          发件地址：<span className="font-medium text-slate-700">{address}</span>
+      <main className="mx-auto max-w-2xl px-4 py-6">
+        <h1 className="large-title">发送邮件</h1>
+        <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+          发件地址：<span className="font-medium" style={{ color: "var(--accent)" }}>{address}</span>
         </p>
 
-        <div className="mt-5 space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">发件人名称</label>
-              <input
-                value={fromName}
-                onChange={(e) => setFromName(e.target.value)}
-                placeholder="可选"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">收件人 *</label>
-              <input
-                value={toMail}
-                onChange={(e) => setToMail(e.target.value)}
-                placeholder="someone@example.com"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
+        {/* 表单 */}
+        <div className="card-group mt-5 p-5">
+          <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
+            <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>
+              发件人
+            </span>
+            <input
+              value={fromName}
+              onChange={(e) => setFromName(e.target.value)}
+              placeholder="可选名称"
+              className="flex-1 bg-transparent px-2 py-1 text-[16px] outline-none"
+              style={{ color: "var(--fg)" }}
+            />
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-slate-600">主题 *</label>
+
+          <div className="mt-3 flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
+            <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>
+              收件人
+            </span>
+            <input
+              value={toMail}
+              onChange={(e) => setToMail(e.target.value)}
+              placeholder="someone@example.com"
+              className="flex-1 bg-transparent px-2 py-1 text-[16px] outline-none"
+              style={{ color: "var(--fg)" }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
+            <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>
+              主题
+            </span>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="邮件主题"
+              className="flex-1 bg-transparent px-2 py-1 text-[16px] outline-none"
+              style={{ color: "var(--fg)" }}
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-slate-600">内容 *</label>
+
+          <div className="mt-3">
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={8}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="邮件内容…"
+              className="w-full resize-none rounded-xl p-3 text-[16px] leading-relaxed outline-none focus:ring-2 focus:ring-[#007aff]/30"
+              style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
             />
           </div>
-          <LoadingButton
-            loading={sending}
-            onClick={send}
-            className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white hover:bg-blue-700"
-          >
-            发送
+
+          <div className="mt-2 flex items-center justify-between">
+            <label className="flex items-center gap-2 text-[14px]" style={{ color: "var(--fg-secondary)" }}>
+              <input
+                type="checkbox"
+                checked={isHtml}
+                onChange={(e) => setIsHtml(e.target.checked)}
+                className="accent-[#007aff]"
+              />
+              HTML 内容
+            </label>
+            <span className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              {content.length} 字
+            </span>
+          </div>
+
+          <LoadingButton loading={sending} onClick={send} className="btn-primary mt-5 w-full">
+            📤 发送
           </LoadingButton>
         </div>
 
-        <div className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold text-slate-800">已发送</h2>
-          {sentList.length === 0 ? (
-            <EmptyState title="暂无已发送邮件" />
-          ) : (
-            <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+        {/* 已发送 */}
+        <h2 className="mb-2 mt-8 px-1 text-[20px] font-bold" style={{ color: "var(--fg)" }}>
+          已发送
+        </h2>
+        {sentList.length === 0 ? (
+          <div className="card-group">
+            <EmptyState icon="📤" title="暂无已发送邮件" />
+          </div>
+        ) : (
+          <div className="card-group">
+            <ul className="divide-y" style={{ borderColor: "var(--separator)" }}>
               {sentList.map((item) => {
                 let body: any = {};
                 try {
-                  body = typeof item.raw === "string" ? JSON.parse(item.raw) : item.raw;
+                  body = typeof item.raw === "string" ? JSON.parse(item.raw) : item.raw || {};
                 } catch {
                   body = {};
                 }
                 return (
-                  <li key={item.id} className="flex items-center justify-between px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">
+                  <li key={item.id} className="card-row">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
+                        {body.subject || "(无主题)"}
+                      </span>
+                      <span className="block truncate text-[13px]" style={{ color: "var(--fg-secondary)" }}>
                         发给 {body.to_mail || item.address}
-                      </p>
-                      <p className="truncate text-sm text-slate-500">{body.subject}</p>
-                    </div>
-                    <span className="shrink-0 text-xs text-slate-400">
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
                       {formatTime(item.created_at)}
                     </span>
                   </li>
                 );
               })}
             </ul>
-          )}
-        </div>
+          </div>
+        )}
       </main>
+      <div style={{ height: 40 }} />
     </div>
   );
 }

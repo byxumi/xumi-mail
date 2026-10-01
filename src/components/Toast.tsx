@@ -18,34 +18,32 @@ export function useToast() {
   return useContext(ToastContext);
 }
 
+const colors: Record<ToastType, string> = {
+  success: "var(--green)",
+  error: "var(--red)",
+  info: "var(--accent)",
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const push = useCallback((type: ToastType, message: string) => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
   }, []);
-
-  const color =
-    (type: ToastType) =>
-    type === "success"
-      ? "border-green-500 bg-green-50 text-green-800"
-      : type === "error"
-        ? "border-red-500 bg-red-50 text-red-800"
-        : "border-blue-500 bg-blue-50 text-blue-800";
 
   return (
     <ToastContext.Provider value={{ push }}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex flex-col items-center gap-2 px-4">
+      <div className="pointer-events-none fixed inset-x-0 top-14 z-[100] flex flex-col items-center gap-2 px-4">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto w-full max-w-md rounded-lg border px-4 py-2.5 text-sm shadow-sm ${color(t.type)}`}
+            className="toast-item pointer-events-auto"
+            style={{ background: "var(--glass)", color: colors[t.type], border: "0.5px solid var(--separator)" }}
           >
+            {t.type === "success" ? "✓ " : t.type === "error" ? "✕ " : "ℹ️ "}
             {t.message}
           </div>
         ))}

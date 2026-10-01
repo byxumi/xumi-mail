@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { EmptyState, LoadingButton, Spinner } from "@/components/ui";
+import { EmptyState, GroupLabel, FormRow, LoadingButton, Segmented, Switch, Spinner } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { api, formatTime, tokenStore, extractSender, MailRowDTO } from "@/lib/client";
+import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
+
+type Tab = "stats" | "mails" | "addresses" | "users" | "settings";
 
 export default function AdminPage() {
   const { push } = useToast();
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminPwd, setAdminPwd] = useState("");
-  const [tab, setTab] = useState<"stats" | "mails" | "addresses" | "users" | "settings">("stats");
+  const [tab, setTab] = useState<Tab>("stats");
   const [stats, setStats] = useState<any>(null);
   const [mails, setMails] = useState<any[]>([]);
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -19,7 +21,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
 
-  // 检查是否已保存管理密码
   useEffect(() => {
     if (tokenStore.getAdmin()) {
       setAdminAuthed(true);
@@ -54,7 +55,6 @@ export default function AdminPage() {
       push("error", "请输入管理密码");
       return;
     }
-    // 直接尝试拉取统计数据验证密码
     tokenStore.setAdmin(adminPwd);
     try {
       await api.adminStatistics();
@@ -71,10 +71,13 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen">
         <Header />
-        <div className="mx-auto max-w-sm px-4 py-24">
-          <h1 className="text-center text-xl font-bold text-slate-900">管理员登录</h1>
-          <p className="mt-2 text-center text-sm text-slate-500">
-            输入站点配置的 ADMIN_PASSWORDS 中的任意一个密码
+        <main className="mx-auto max-w-sm px-4 pb-16 pt-16 text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#5856d6] to-[#af52de] text-4xl shadow-lg shadow-purple-500/30">
+            🛡️
+          </div>
+          <h1 className="large-title mt-6">管理员</h1>
+          <p className="mt-2 text-[14px]" style={{ color: "var(--fg-secondary)" }}>
+            输入站点配置的 ADMIN_PASSWORDS 密码
           </p>
           <div className="mt-6 space-y-3">
             <input
@@ -83,202 +86,119 @@ export default function AdminPage() {
               onChange={(e) => setAdminPwd(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && login()}
               placeholder="管理密码"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="ios-input"
             />
-            <button
-              onClick={login}
-              className="w-full rounded-lg bg-slate-800 py-2.5 text-sm font-medium text-white hover:bg-slate-700"
-            >
+            <button onClick={login} className="btn-primary w-full">
               登录
             </button>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
-  const tabs = [
-    { id: "stats", label: "统计" },
-    { id: "mails", label: "邮件" },
-    { id: "addresses", label: "地址" },
-    { id: "users", label: "用户" },
-    { id: "settings", label: "清理设置" },
-  ] as const;
-
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-slate-900">管理后台</h1>
-          <button
-            onClick={() => {
-              tokenStore.clearAdmin();
-              setAdminAuthed(false);
-            }}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
-          >
-            退出
-          </button>
-        </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {tabs.map((t) => (
+      <main className="mx-auto max-w-5xl px-3 py-4 md:px-4 md:py-6">
+        <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+          <div>
+            <h1 className="large-title">管理后台</h1>
+            <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+              系统状态与运维
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Segmented
+              value={tab}
+              onChange={(v) => setTab(v)}
+              options={[
+                { value: "stats", label: "统计" },
+                { value: "mails", label: "邮件" },
+                { value: "addresses", label: "地址" },
+                { value: "users", label: "用户" },
+                { value: "settings", label: "清理" },
+              ]}
+            />
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
-                tab === t.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
+              onClick={() => {
+                tokenStore.clearAdmin();
+                setAdminAuthed(false);
+              }}
+              className="pressable rounded-full px-3 py-1.5 text-[13px] font-medium"
+              style={{ background: "var(--fill)", color: "var(--red)" }}
             >
-              {t.label}
+              退出
             </button>
-          ))}
+          </div>
         </div>
 
-        {loading && <Spinner />}
-
-        {tab === "stats" && stats && (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {[
-              { label: "地址数", value: stats.address },
-              { label: "邮件总数", value: stats.mail },
-              { label: "今日邮件", value: stats.todayMail },
-              { label: "用户数", value: stats.user },
-              { label: "已发送", value: stats.sent },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-2xl font-bold text-slate-900">{item.value}</p>
-                <p className="mt-1 text-sm text-slate-500">{item.label}</p>
-              </div>
-            ))}
+        {loading && (
+          <div className="mt-6 flex justify-center">
+            <Spinner size={28} />
           </div>
         )}
 
+        {tab === "stats" && stats && <StatsView stats={stats} />}
         {tab === "mails" && (
-          <div className="rounded-xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-100 p-3">
-              <div className="flex gap-2">
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="按地址筛选（回车确认）"
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
-                />
-                <button
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await api.adminMails({ limit: 50, offset: 0, address: query || undefined });
-                      setMails(res.results || []);
-                    } catch (e) {
-                      push("error", (e as Error).message);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm text-white"
-                >
-                  筛选
-                </button>
-              </div>
-            </div>
-            <ul className="divide-y divide-slate-100">
-              {mails.length === 0 ? (
-                <div className="p-6"><EmptyState title="暂无邮件" /></div>
-              ) : (
-                mails.map((mail) => {
-                  const sender = extractSender(mail.source || "");
-                  return (
-                    <li key={mail.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">
-                          {sender.name || sender.email || mail.source} → {mail.address}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">{formatTime(mail.created_at)}</p>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          try {
-                            await api.adminDeleteMail(mail.id);
-                            setMails((prev) => prev.filter((m) => m.id !== mail.id));
-                            push("success", "已删除");
-                          } catch (e) {
-                            push("error", (e as Error).message);
-                          }
-                        }}
-                        className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-                      >
-                        删除
-                      </button>
-                    </li>
-                  );
-                })
-              )}
-            </ul>
-          </div>
-        )}
-
-        {tab === "addresses" && (
-          <AddressesTab
-            addresses={addresses}
-            onRefresh={async () => {
+          <MailsView
+            mails={mails}
+            query={query}
+            setQuery={setQuery}
+            onSearch={async () => {
               setLoading(true);
               try {
-                const a = await api.adminAddresses({ limit: 50, offset: 0 });
-                setAddresses(a.results || []);
+                const res = await api.adminMails({ limit: 50, offset: 0, address: query || undefined });
+                setMails(res.results || []);
+              } catch (e) {
+                push("error", (e as Error).message);
               } finally {
                 setLoading(false);
               }
             }}
+            onDelete={async (id) => {
+              try {
+                await api.adminDeleteMail(id);
+                setMails((prev) => prev.filter((m) => m.id !== id));
+                push("success", "已删除");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            }}
           />
         )}
-
-        {tab === "users" && (
-          <div className="rounded-xl border border-slate-200 bg-white">
-            <ul className="divide-y divide-slate-100">
-              {users.length === 0 ? (
-                <div className="p-6"><EmptyState title="暂无用户" /></div>
-              ) : (
-                users.map((user) => (
-                  <li key={user.id} className="flex items-center justify-between px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{user.user_email}</p>
-                      <p className="text-xs text-slate-500">
-                        {formatTime(user.created_at)} · 绑定 {user.address_count} 个地址
-                      </p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm(`确认删除用户 ${user.user_email}？`)) return;
-                        try {
-                          await api.adminDeleteUser(user.id);
-                          setUsers((prev) => prev.filter((u) => u.id !== user.id));
-                          push("success", "已删除");
-                        } catch (e) {
-                          push("error", (e as Error).message);
-                        }
-                      }}
-                      className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-600 hover:bg-red-50"
-                    >
-                      删除
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+        {tab === "addresses" && (
+          <AddressesAdmin
+            addresses={addresses}
+            onRefresh={async () => {
+              const a = await api.adminAddresses({ limit: 50, offset: 0 });
+              setAddresses(a.results || []);
+            }}
+          />
         )}
-
+        {tab === "users" && (
+          <UsersView
+            users={users}
+            onDelete={async (id) => {
+              if (!window.confirm("确认删除该用户？")) return;
+              try {
+                await api.adminDeleteUser(id);
+                setUsers((prev) => prev.filter((u) => u.id !== id));
+                push("success", "已删除");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            }}
+          />
+        )}
         {tab === "settings" && cleanup && (
-          <CleanupTab
+          <CleanupView
             cleanup={cleanup}
             onSave={async (body) => {
               try {
                 await api.saveAdminAutoCleanup(body);
                 push("success", "已保存");
-                const c = await api.adminAutoCleanup();
-                setCleanup(c);
+                setCleanup(await api.adminAutoCleanup());
               } catch (e) {
                 push("error", (e as Error).message);
               }
@@ -299,7 +219,107 @@ export default function AdminPage() {
   );
 }
 
-function AddressesTab({ addresses, onRefresh }: { addresses: any[]; onRefresh: () => void }) {
+/* ---------- 统计 ---------- */
+function StatsView({ stats }: { stats: any }) {
+  const items = [
+    { label: "地址数", value: stats.address, icon: "📧", color: "#007aff" },
+    { label: "邮件总数", value: stats.mail, icon: "📨", color: "#34c759" },
+    { label: "今日邮件", value: stats.todayMail, icon: "🔥", color: "#ff9500" },
+    { label: "用户数", value: stats.user, icon: "👤", color: "#af52de" },
+    { label: "已发送", value: stats.sent, icon: "📤", color: "#5ac8fa" },
+  ];
+  return (
+    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {items.map((item) => (
+        <div key={item.label} className="card-group p-4">
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[18px] text-white"
+            style={{ background: item.color }}
+          >
+            {item.icon}
+          </span>
+          <p className="mt-3 text-[28px] font-bold tabular-nums" style={{ color: "var(--fg)" }}>
+            {item.value}
+          </p>
+          <p className="text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+            {item.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- 邮件管理 ---------- */
+function MailsView({
+  mails,
+  query,
+  setQuery,
+  onSearch,
+  onDelete,
+}: {
+  mails: any[];
+  query: string;
+  setQuery: (v: string) => void;
+  onSearch: () => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <>
+      <div className="card-group mt-5 flex items-center gap-2 p-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSearch()}
+          placeholder="按收件地址筛选"
+          className="ios-input"
+        />
+        <button onClick={onSearch} className="pressable shrink-0 rounded-xl px-4 py-2.5 text-[15px] font-medium text-white" style={{ background: "var(--accent)" }}>
+          筛选
+        </button>
+      </div>
+      <div className="card-group mt-3">
+        {mails.length === 0 ? (
+          <EmptyState icon="📭" title="暂无邮件" />
+        ) : (
+          <ul>
+            {mails.map((mail) => {
+              const sender = extractSender(mail.source || "");
+              return (
+                <li key={mail.id} className="card-row">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
+                    style={{ background: "#5856d6" }}
+                  >
+                    {(sender.name || sender.email || "?").charAt(0).toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                      {(sender.name || sender.email) + " → " + mail.address}
+                    </p>
+                    <p className="truncate text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                      {formatTime(mail.created_at)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onDelete(mail.id)}
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    🗑️
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ---------- 地址管理 ---------- */
+function AddressesAdmin({ addresses, onRefresh }: { addresses: any[]; onRefresh: () => void }) {
   const { push } = useToast();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -323,33 +343,37 @@ function AddressesTab({ addresses, onRefresh }: { addresses: any[]; onRefresh: (
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3">
+    <>
+      <div className="card-group mt-5 flex items-center gap-2 p-3">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="新地址前缀（如 abc）"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+          className="ios-input"
         />
-        <LoadingButton
-          loading={creating}
-          onClick={create}
-          className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700"
-        >
+        <LoadingButton loading={creating} onClick={create} className="pressable shrink-0 rounded-xl px-4 py-2.5 text-[15px] font-medium text-white" style={{ background: "var(--accent)" }}>
           创建
         </LoadingButton>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-white">
-        <ul className="divide-y divide-slate-100">
-          {addresses.length === 0 ? (
-            <div className="p-6"><EmptyState title="暂无地址" /></div>
-          ) : (
-            addresses.map((addr) => (
-              <li key={addr.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-800">{addr.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {formatTime(addr.created_at)} · 邮件 {addr.mail_count} 封
+      <div className="card-group mt-3">
+        {addresses.length === 0 ? (
+          <EmptyState icon="📧" title="暂无地址" />
+        ) : (
+          <ul>
+            {addresses.map((addr) => (
+              <li key={addr.id} className="card-row">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
+                  style={{ background: "#007aff" }}
+                >
+                  {addr.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                    {addr.name}
+                  </p>
+                  <p className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                    {formatTime(addr.created_at)} · {addr.mail_count || 0} 封
                   </p>
                 </div>
                 <button
@@ -363,20 +387,62 @@ function AddressesTab({ addresses, onRefresh }: { addresses: any[]; onRefresh: (
                       push("error", (e as Error).message);
                     }
                   }}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                  style={{ background: "var(--fill)" }}
                 >
-                  删除
+                  🗑️
                 </button>
               </li>
-            ))
-          )}
-        </ul>
+            ))}
+          </ul>
+        )}
       </div>
+    </>
+  );
+}
+
+/* ---------- 用户管理 ---------- */
+function UsersView({ users, onDelete }: { users: any[]; onDelete: (id: number) => void }) {
+  return (
+    <div className="card-group mt-5">
+      {users.length === 0 ? (
+        <EmptyState icon="👤" title="暂无用户" />
+      ) : (
+        <ul>
+          {users.map((user) => (
+            <li key={user.id} className="card-row">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-white"
+                style={{ background: "linear-gradient(135deg,#af52de,#5856d6)" }}
+              >
+                {user.user_email?.charAt(0)?.toUpperCase() || "?"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                  {user.user_email}
+                </p>
+                <p className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                  {formatTime(user.created_at)} · 绑定 {user.address_count || 0} 个地址
+                  {user.role ? ` · ${user.role}` : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => onDelete(user.id)}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                style={{ background: "var(--fill)" }}
+              >
+                🗑️
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function CleanupTab({
+/* ---------- 清理设置 ---------- */
+function CleanupView({
   cleanup,
   onSave,
   onClean,
@@ -387,56 +453,53 @@ function CleanupTab({
 }) {
   const [form, setForm] = useState<any>(cleanup);
   useEffect(() => setForm(cleanup), [cleanup]);
-
   const set = (key: string, value: any) => setForm((prev: any) => ({ ...prev, [key]: value }));
 
-  return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-      {[
-        { key: "enableMailsAutoCleanup", label: "自动清理邮件", daysKey: "cleanMailsDays" },
-        { key: "enableUnknowMailsAutoCleanup", label: "自动清理未知地址邮件", daysKey: "cleanUnknowMailsDays" },
-        { key: "enableSendBoxAutoCleanup", label: "自动清理发件箱", daysKey: "cleanSendBoxDays" },
-        { key: "enableAddressAutoCleanup", label: "自动清理超期地址", daysKey: "cleanAddressDays" },
-        { key: "enableInactiveAddressAutoCleanup", label: "清理不活跃地址", daysKey: "cleanInactiveAddressDays" },
-        { key: "enableUnboundAddressAutoCleanup", label: "清理未绑定地址", daysKey: "cleanUnboundAddressDays" },
-        { key: "enableEmptyAddressAutoCleanup", label: "清理空地址", daysKey: "cleanEmptyAddressDays" },
-      ].map(({ key, label, daysKey }) => (
-        <div key={key} className="flex items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={!!form?.[key]}
-              onChange={(e) => set(key, e.target.checked)}
-            />
-            {label}
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            value={form?.[daysKey] ?? 7}
-            onChange={(e) => set(daysKey, parseInt(e.target.value) || 7)}
-            disabled={!form?.[key]}
-            className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-50"
-          />
-          <span className="w-8 text-xs text-slate-400">天</span>
-        </div>
-      ))}
+  const rows = [
+    { key: "enableMailsAutoCleanup", label: "自动清理邮件", daysKey: "cleanMailsDays" },
+    { key: "enableUnknowMailsAutoCleanup", label: "清理未知地址邮件", daysKey: "cleanUnknowMailsDays" },
+    { key: "enableSendBoxAutoCleanup", label: "清理发件箱", daysKey: "cleanSendBoxDays" },
+    { key: "enableAddressAutoCleanup", label: "清理超期地址", daysKey: "cleanAddressDays" },
+    { key: "enableInactiveAddressAutoCleanup", label: "清理不活跃地址", daysKey: "cleanInactiveAddressDays" },
+    { key: "enableUnboundAddressAutoCleanup", label: "清理未绑定地址", daysKey: "cleanUnboundAddressDays" },
+    { key: "enableEmptyAddressAutoCleanup", label: "清理空地址", daysKey: "cleanEmptyAddressDays" },
+  ];
 
-      <div className="flex gap-2 border-t border-slate-100 pt-4">
-        <button
-          onClick={() => onSave(form)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
+  return (
+    <>
+      <GroupLabel>自动清理（每小时 cron 检查）</GroupLabel>
+      <div className="card-group">
+        {rows.map((row) => (
+          <div key={row.key} className="card-row justify-between">
+            <span className="flex-1 text-[15px]" style={{ color: "var(--fg)" }}>
+              {row.label}
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={form?.[row.daysKey] ?? 7}
+              onChange={(e) => set(row.daysKey, parseInt(e.target.value) || 7)}
+              disabled={!form?.[row.key]}
+              className="w-16 rounded-lg px-2 py-1 text-center text-[14px] outline-none disabled:opacity-40"
+              style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
+            />
+            <span className="w-7 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              天
+            </span>
+            <Switch checked={!!form?.[row.key]} onChange={(v) => set(row.key, v)} />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex gap-3">
+        <button onClick={() => onSave(form)} className="btn-primary flex-1">
           保存设置
         </button>
-        <button
-          onClick={() => onClean("mails", 1)}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-        >
+        <button onClick={() => onClean("mails", 1)} className="btn-secondary flex-1">
           手动清理 1 天前邮件
         </button>
       </div>
-    </div>
+    </>
   );
 }

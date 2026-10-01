@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { LoadingButton } from "@/components/ui";
+import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { api, sha256Hex, tokenStore } from "@/lib/client";
 
 export default function AccountPage() {
   const { push } = useToast();
+  const copy = useCopy();
   const { settings } = useSettings();
   const { token, clear } = useAddressToken();
 
@@ -28,7 +29,6 @@ export default function AccountPage() {
   const [whEnabled, setWhEnabled] = useState(false);
 
   // 地址密码
-  const [oldPwd, setOldPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
 
@@ -37,6 +37,13 @@ export default function AccountPage() {
   const [userPwd, setUserPwd] = useState("");
   const [loginMode, setLoginMode] = useState<"login" | "register">("login");
   const [userBusy, setUserBusy] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+
+  // 面板展开
+  const [showAutoReply, setShowAutoReply] = useState(false);
+  const [showWebhook, setShowWebhook] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showUser, setShowUser] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -71,6 +78,7 @@ export default function AccountPage() {
         })
         .catch(() => {});
     }
+    setUserLoggedIn(!!tokenStore.getUser());
   }, [token, settings]);
 
   const saveAutoReply = async () => {
@@ -114,7 +122,6 @@ export default function AccountPage() {
       await api.changePassword({ new_password: hashed });
       push("success", "密码已更新");
       setNewPwd("");
-      setOldPwd("");
     } catch (e) {
       push("error", (e as Error).message);
     } finally {
@@ -129,15 +136,13 @@ export default function AccountPage() {
     }
     setUserBusy(true);
     try {
-      if (loginMode === "login") {
-        const res = await api.login({ user_email: userEmail.trim(), password: userPwd });
-        tokenStore.setUser(res.jwt);
-        push("success", `欢迎回来，${res.user_email}`);
-      } else {
-        const res = await api.register({ user_email: userEmail.trim(), password: userPwd });
-        tokenStore.setUser(res.jwt);
-        push("success", `注册成功，${res.user_email}`);
-      }
+      const res =
+        loginMode === "login"
+          ? await api.login({ user_email: userEmail.trim(), password: userPwd })
+          : await api.register({ user_email: userEmail.trim(), password: userPwd });
+      tokenStore.setUser(res.jwt);
+      setUserLoggedIn(true);
+      push("success", loginMode === "login" ? `欢迎回来，${res.user_email}` : `注册成功，${res.user_email}`);
     } catch (e) {
       push("error", (e as Error).message);
     } finally {
@@ -159,183 +164,217 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-xl font-bold text-slate-900">账号设置</h1>
+      <main className="mx-auto max-w-2xl px-4 py-6">
+        <h1 className="large-title">账号</h1>
+        <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+          Xumi Mail 设置
+        </p>
 
         {token ? (
-          <div className="mt-5 space-y-6">
+          <>
             {/* 当前地址 */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-base font-semibold text-slate-800">当前地址</h2>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-lg font-medium text-blue-600">{address}</p>
-                  <p className="mt-0.5 text-sm text-slate-500">发信余额：{sendBalance}</p>
+            <GroupLabel>当前地址</GroupLabel>
+            <div className="card-group">
+              <div className="card-row justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[17px] font-semibold" style={{ color: "var(--accent)" }}>
+                    {address}
+                  </p>
+                  <p className="mt-0.5 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+                    发信余额 {sendBalance}
+                  </p>
                 </div>
                 <button
-                  onClick={deleteAddress}
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  onClick={() => copy(address, "地址已复制")}
+                  className="pressable rounded-full bg-[#007aff] px-4 py-1.5 text-[13px] font-semibold text-white"
                 >
-                  删除地址
+                  复制
                 </button>
               </div>
-            </section>
+            </div>
 
-            {/* 地址密码 */}
-            {settings?.enableAddressPassword && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h2 className="text-base font-semibold text-slate-800">地址密码</h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  设置密码后，可通过邮箱地址 + 密码在任意设备登录查看收件。
-                </p>
-                <div className="mt-3 space-y-2">
-                  <input
-                    type="password"
-                    value={oldPwd}
-                    onChange={(e) => setOldPwd(e.target.value)}
-                    placeholder="原密码（留空则直接设置）"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  />
+            {/* 进阶功能 */}
+            <GroupLabel>邮箱功能</GroupLabel>
+            <div className="card-group">
+              {settings?.enableAddressPassword && (
+                <FormRow icon="🔑" label="地址密码" onClick={() => setShowPwd((v) => !v)} />
+              )}
+              {settings?.enableAutoReply && (
+                <FormRow icon="🤖" label="自动回复" onClick={() => setShowAutoReply((v) => !v)} />
+              )}
+              {settings?.enableWebhook && (
+                <FormRow icon="🪝" label="Webhook 通知" onClick={() => setShowWebhook((v) => !v)} />
+              )}
+              <FormRow icon="👤" label="用户账号" onClick={() => setShowUser((v) => !v)} />
+            </div>
+
+            {/* 地址密码面板 */}
+            {settings?.enableAddressPassword && showPwd && (
+              <div className="card-group mt-2 fade-in">
+                <div className="p-5">
+                  <p className="mb-3 text-[13px]" style={{ color: "var(--fg-secondary)" }}>
+                    设置密码后，可用「邮箱地址 + 密码」在任意设备登录查看收件。
+                  </p>
                   <input
                     type="password"
                     value={newPwd}
                     onChange={(e) => setNewPwd(e.target.value)}
                     placeholder="新密码"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="ios-input"
                   />
-                  <LoadingButton
-                    loading={changingPwd}
-                    onClick={changePassword}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                  >
+                  <LoadingButton loading={changingPwd} onClick={changePassword} className="btn-primary mt-3 w-full">
                     更新密码
                   </LoadingButton>
                 </div>
-              </section>
+              </div>
             )}
 
-            {/* 自动回复 */}
-            {settings?.enableAutoReply && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-slate-800">自动回复</h2>
-                  <label className="flex items-center gap-1.5 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={autoEnabled}
-                      onChange={(e) => setAutoEnabled(e.target.checked)}
-                    />
-                    启用
-                  </label>
-                </div>
-                <div className="mt-3 space-y-2">
+            {/* 自动回复面板 */}
+            {settings?.enableAutoReply && showAutoReply && (
+              <div className="card-group mt-2 fade-in">
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[16px] font-medium" style={{ color: "var(--fg)" }}>
+                      启用自动回复
+                    </span>
+                    <Switch checked={autoEnabled} onChange={setAutoEnabled} />
+                  </div>
                   <input
                     value={autoSourcePrefix}
                     onChange={(e) => setAutoSourcePrefix(e.target.value)}
-                    placeholder="来源前缀过滤（如 /@example\\.com$/ 或留空回复所有）"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    placeholder="来源过滤（如 /@example\\.com$/ 或留空全部）"
+                    className="ios-input mt-3"
                   />
                   <input
                     value={autoSubject}
                     onChange={(e) => setAutoSubject(e.target.value)}
                     placeholder="回复主题（默认 Auto-reply）"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="ios-input mt-2"
                   />
                   <textarea
                     value={autoMessage}
                     onChange={(e) => setAutoMessage(e.target.value)}
                     rows={3}
                     placeholder="回复内容"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="ios-input mt-2 resize-none"
                   />
-                  <button
-                    onClick={saveAutoReply}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                  >
-                    保存
+                  <button onClick={saveAutoReply} className="btn-primary mt-3 w-full">
+                    保存自动回复
                   </button>
                 </div>
-              </section>
+              </div>
             )}
 
-            {/* Webhook */}
-            {settings?.enableWebhook && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-slate-800">Webhook 通知</h2>
-                  <label className="flex items-center gap-1.5 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={whEnabled}
-                      onChange={(e) => setWhEnabled(e.target.checked)}
-                    />
-                    启用
-                  </label>
-                </div>
-                <div className="mt-3 space-y-2">
+            {/* Webhook 面板 */}
+            {settings?.enableWebhook && showWebhook && (
+              <div className="card-group mt-2 fade-in">
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[16px] font-medium" style={{ color: "var(--fg)" }}>
+                      启用 Webhook
+                    </span>
+                    <Switch checked={whEnabled} onChange={setWhEnabled} />
+                  </div>
                   <input
                     value={whUrl}
                     onChange={(e) => setWhUrl(e.target.value)}
                     placeholder="https://example.com/hook"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    className="ios-input mt-3"
                   />
-                  <button
-                    onClick={saveWebhook}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                  >
-                    保存
+                  <button onClick={saveWebhook} className="btn-primary mt-3 w-full">
+                    保存 Webhook
                   </button>
                 </div>
-              </section>
+              </div>
             )}
-          </div>
-        ) : (
-          <p className="mt-5 text-slate-500">请先创建邮箱地址。</p>
-        )}
 
-        {/* 用户账号（可选） */}
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="text-base font-semibold text-slate-800">用户账号（可选）</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            注册后可将邮箱地址绑定到账号统一管理（临时邮箱本身无需登录）。
-          </p>
-          <div className="mt-3 flex gap-2 text-sm">
-            <button
-              onClick={() => setLoginMode("login")}
-              className={`rounded-lg px-3 py-1.5 ${loginMode === "login" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}
-            >
-              登录
-            </button>
-            <button
-              onClick={() => setLoginMode("register")}
-              className={`rounded-lg px-3 py-1.5 ${loginMode === "register" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}
-            >
-              注册
-            </button>
+            {/* 用户账号面板 */}
+            {showUser && (
+              <div className="card-group mt-2 fade-in">
+                <div className="p-5">
+                  {userLoggedIn ? (
+                    <div className="text-center">
+                      <div className="text-4xl">👤</div>
+                      <p className="mt-2 text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
+                        {tokenStore.getUser() ? "已登录" : "未登录"}
+                      </p>
+                      <button
+                        onClick={() => {
+                          tokenStore.clearUser();
+                          setUserLoggedIn(false);
+                          push("success", "已退出用户账号");
+                        }}
+                        className="btn-secondary mt-4 w-full"
+                      >
+                        退出用户账号
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mb-3 text-[13px]" style={{ color: "var(--fg-secondary)" }}>
+                        注册后可将邮箱地址绑定到账号统一管理（临时邮箱本身无需登录）。
+                      </p>
+                      <div className="segmented w-full">
+                        <button
+                          className={loginMode === "login" ? "active flex-1" : "flex-1"}
+                          onClick={() => setLoginMode("login")}
+                        >
+                          登录
+                        </button>
+                        <button
+                          className={loginMode === "register" ? "active flex-1" : "flex-1"}
+                          onClick={() => setLoginMode("register")}
+                        >
+                          注册
+                        </button>
+                      </div>
+                      <input
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        placeholder="用户名"
+                        className="ios-input mt-3"
+                      />
+                      <input
+                        type="password"
+                        value={userPwd}
+                        onChange={(e) => setUserPwd(e.target.value)}
+                        placeholder="密码"
+                        className="ios-input mt-2"
+                      />
+                      <LoadingButton loading={userBusy} onClick={submitUser} className="btn-primary mt-3 w-full">
+                        {loginMode === "login" ? "登录" : "注册"}
+                      </LoadingButton>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 危险区 */}
+            <GroupLabel>账户操作</GroupLabel>
+            <div className="card-group">
+              <FormRow
+                danger
+                icon="🗑️"
+                label="删除当前地址"
+                onClick={deleteAddress}
+              />
+            </div>
+            <p className="mt-4 px-4 text-center text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              Xumi Mail v1.0 · 数据存储在 Cloudflare
+            </p>
+          </>
+        ) : (
+          <div className="card-group mt-6">
+            <div className="empty-state">
+              <div className="icon">👋</div>
+              <p className="text-[17px] font-semibold" style={{ color: "var(--fg-secondary)" }}>
+                尚未创建邮箱地址
+              </p>
+              <p className="mt-1 text-[14px]">请先到收件箱创建一个临时邮箱</p>
+            </div>
           </div>
-          <div className="mt-3 space-y-2">
-            <input
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-              placeholder="用户名"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-            <input
-              type="password"
-              value={userPwd}
-              onChange={(e) => setUserPwd(e.target.value)}
-              placeholder="密码"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-            <LoadingButton
-              loading={userBusy}
-              onClick={submitUser}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-700"
-            >
-              {loginMode === "login" ? "登录" : "注册"}
-            </LoadingButton>
-          </div>
-        </section>
+        )}
       </main>
     </div>
   );
