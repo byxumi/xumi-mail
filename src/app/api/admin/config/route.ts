@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { getEnv, json, text, ApiError, requireAdmin } from "@/lib/server";
 import { getJsonSetting, saveSetting } from "@/lib/db";
-import { CONSTANTS } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -34,5 +33,3 @@ export async function POST(req: NextRequest) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }
 }
-
-export { CONSTANTS };

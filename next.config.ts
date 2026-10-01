@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // CI 未安装 eslint，跳过构建时 lint（类型检查由 tsc 保证）
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   webpack: (config, { isServer }) => {
     // cloudflare:email 是 Cloudflare Workers 运行时模块，仅在部署后的 Worker 中可用，
     // webpack 构建时标记为 external，由运行时解析（OpenNext 部署的 Worker 支持）
