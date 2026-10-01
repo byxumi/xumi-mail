@@ -73,6 +73,9 @@ export interface Env {
   REDEEM_CODE_URL?: string;
   ADMIN_USER_ROLE?: string;
   USER_DEFAULT_ROLE?: string;
+  ENABLE_USER_REGISTER?: string;
+  ENABLE_MAIL_VERIFY?: string;
+  OAUTH2_CLIENT_CONFIG?: string;
   SMTP_IMAP_PROXY_CONFIG?: string;
   USER_ROLES?: string;
 

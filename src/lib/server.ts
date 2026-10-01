@@ -77,4 +77,19 @@ export function clientIp(req: Request): string {
   );
 }
 
+/** 服务端 SHA-256 hex（与上游前端 hashPassword 一致） */
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** 校验明文候选是否命中配置的密码列表（列表存明文，候选为前端 SHA-256 hex） */
+export async function verifySha256AgainstList(candidateHash: string, plainList: string[]): Promise<boolean> {
+  if (!candidateHash || plainList.length === 0) return false;
+  for (const plain of plainList) {
+    if (await sha256Hex(plain) === candidateHash) return true;
+  }
+  return false;
+}
+
 export { getStringValue };

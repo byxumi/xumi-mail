@@ -5,6 +5,43 @@ import { requireAddress, requireUser } from "@/lib/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+/** GET —— 用户绑定的地址列表（上游 /user_api/bind_address 重写目标，返回 {results, count}） */
+export async function GET(req: NextRequest) {
+  try {
+    const { env, payload } = await requireUser(req);
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "20", 10) || 20, 1), 100);
+    const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10) || 0, 0);
+    const query = searchParams.get("query")?.trim() || "";
+
+    const where = query
+      ? `WHERE ua.user_id = ? AND a.name LIKE ?`
+      : `WHERE ua.user_id = ?`;
+    const params = query ? [payload.user_id, `%${query}%`] : [payload.user_id];
+
+    const rows = await env.DB.prepare(
+      `SELECT a.id, a.name, a.created_at, a.updated_at,
+              (SELECT count(*) FROM raw_mails WHERE address = a.name) as mail_count
+       FROM address a
+       JOIN users_address ua ON ua.address_id = a.id
+       ${where}
+       ORDER BY a.created_at DESC
+       LIMIT ? OFFSET ?`
+    )
+      .bind(...params, limit, offset)
+      .all<any>();
+    const countRow = await env.DB.prepare(
+      `SELECT count(*) as count FROM address a JOIN users_address ua ON ua.address_id = a.id ${where}`
+    )
+      .bind(...params)
+      .first<number>("count");
+
+    return json({ results: rows.results || [], count: countRow || 0 });
+  } catch (e) {
+    return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
+  }
+}
+
 /** 绑定地址到用户（需要用户 token + 地址 JWT） */
 export async function POST(req: NextRequest) {
   try {

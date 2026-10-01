@@ -419,6 +419,87 @@ export const redeemCode = async (
   return redeemAddress(env, body as any, row, redeemValue);
 };
 
+type QueryRedeemCodeRow = {
+  redeem_type: string;
+  value: string;
+  redeemed: 0 | 1;
+  expires_at: string;
+};
+
+/** 查询兑换码状态（上游 /redeem_api/query 语义） */
+export const queryRedeemCode = async (env: Env, code: unknown) => {
+  requireRedeemCodeEnabled(env);
+  const normalizedCode = normalizeRedeemCode(code);
+  if (!normalizedCode) throw new ApiError(400, "兑换码不可用");
+  const row = await env.DB.prepare(
+    `SELECT redeem_type, value, redeemed, expires_at
+     FROM redeem_codes WHERE code = ? AND enabled = 1`
+  )
+    .bind(normalizedCode)
+    .first<QueryRedeemCodeRow>();
+  if (!row || !isRedeemType(row.redeem_type)) {
+    throw new ApiError(400, "兑换码不可用");
+  }
+  const expiresAt = Date.parse(row.expires_at);
+  const status = !Number.isFinite(expiresAt) || expiresAt <= Date.now()
+    ? "expired"
+    : row.redeemed === 1
+      ? "redeemed"
+      : "unused";
+  return { redeem_type: row.redeem_type, value: row.value, status };
+};
+
+type RedeemResultRow = {
+  id: number;
+  redeem_type: string;
+  result: string;
+};
+
+/** 查询兑换结果（上游 /redeem_api/result 语义） */
+export const queryRedeemResult = async (env: Env, code: unknown) => {
+  requireRedeemCodeEnabled(env);
+  const normalizedCode = normalizeRedeemCode(code);
+  if (!normalizedCode) throw new ApiError(400, "兑换码不可用");
+  const row = await env.DB.prepare(
+    `SELECT id, redeem_type, result
+     FROM redeem_codes
+     WHERE code = ? AND enabled = 1 AND redeemed = 1 AND result IS NOT NULL
+     AND datetime(expires_at) > datetime('now')`
+  )
+    .bind(normalizedCode)
+    .first<RedeemResultRow>();
+  if (!row) throw new ApiError(400, "兑换码不可用");
+
+  if (row.redeem_type === RedeemType.AddressPrefixOnce) {
+    const result = await getRedeemedAddress(env, row);
+    if (!result) throw new ApiError(400, "兑换码不可用");
+    return {
+      type: result.type,
+      address: result.address,
+      jwt: result.jwt,
+      ...(typeof result.password === "string" ? { password: result.password } : {}),
+    };
+  }
+  const decrypted = await decryptRedeemResult(env, row.id, row.result);
+  const result = getJsonObjectValue<any>(decrypted);
+  if (!result || result.type !== row.redeem_type) {
+    throw new ApiError(400, "兑换码不可用");
+  }
+  if (result.type === RedeemType.Role) {
+    if (typeof result.user_email !== "string" || typeof result.role !== "string") {
+      throw new ApiError(400, "兑换码不可用");
+    }
+    return { type: result.type, user_email: result.user_email, role: result.role };
+  }
+  if (result.type === RedeemType.SendBalance) {
+    if (typeof result.address !== "string" || typeof result.amount !== "number") {
+      throw new ApiError(400, "兑换码不可用");
+    }
+    return { type: result.type, address: result.address, amount: result.amount };
+  }
+  throw new ApiError(400, "兑换码不可用");
+};
+
 // ---------------- Admin 管理 ----------------
 
 const parsePositiveId = (value: string | null): number | null => {
