@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton, Spinner, Segmented, useCopy, SearchInput, ConfirmDialog } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings, useInterval } from "@/hooks/useSettings";
 import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex } from "@/lib/client";
@@ -325,18 +327,20 @@ export default function MailPage() {
 
   // 主界面：iOS Mail 风格（左列表 + 右详情）
   return (
-    <div className="min-h-screen">
+    <MotionPage className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-5xl px-3 py-4 md:px-4 md:py-6">
         {/* 大标题 + 操作 */}
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
           <div>
-            <h1 className="large-title">{tab === "inbox" ? "收件箱" : "已发送"}</h1>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-              {tab === "inbox"
-                ? `共 ${count} 封 · 每 15 秒自动刷新`
-                : `${sent.length} 封已发送`}
-            </p>
+            <FadeUp>
+              <h1 className="large-title">{tab === "inbox" ? "收件箱" : "已发送"}</h1>
+              <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+                {tab === "inbox"
+                  ? `共 ${count} 封 · 每 15 秒自动刷新`
+                  : `${sent.length} 封已发送`}
+              </p>
+            </FadeUp>
           </div>
           <div className="flex items-center gap-3">
             {tab === "inbox" && unreadCount > 0 && (
@@ -447,7 +451,7 @@ export default function MailPage() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
-    </div>
+    </MotionPage>
   );
 }
 
@@ -518,75 +522,104 @@ function InboxView({
           />
         ) : (
           <ul className="h-full overflow-y-auto">
-            {inbox.map((mail, i) => {
-              const sender = extractSender(mail.sender);
-              return (
-                <MailListItem
-                  key={mail.id}
-                  mail={mail}
-                  sender={sender}
-                  active={selectedId === mail.id}
-                  onClick={() => onSelect(mail.id)}
-                  index={i}
-                />
-              );
-            })}
+            <AnimatePresence initial={false}>
+              {inbox.map((mail, i) => {
+                const sender = extractSender(mail.sender);
+                return (
+                  <MailListItem
+                    key={mail.id}
+                    mail={mail}
+                    sender={sender}
+                    active={selectedId === mail.id}
+                    onClick={() => onSelect(mail.id)}
+                    index={i}
+                  />
+                );
+              })}
+            </AnimatePresence>
           </ul>
         )}
       </div>
 
       {/* 邮件详情（桌面常驻） */}
-      <div className="card-group hidden min-h-[320px] lg:block lg:h-[calc(100vh-200px)]">
-        {!selectedMail ? (
-          <div className="flex h-full flex-col items-center justify-center py-24" style={{ color: "var(--fg-tertiary)" }}>
-            <div className="opacity-60">
-              <Icon name="mail-open" size={52} strokeWidth={1.5} />
-            </div>
-            <p className="mt-3 text-[14px]">选择一封邮件查看详情</p>
-          </div>
-        ) : (
-          <MailDetail
-            mail={selectedMail}
-            onDelete={() => onDelete(selectedMail.id)}
-            onCopy={copy}
-            settings={settings}
-            onToggleRead={onToggleRead}
-          />
-        )}
+      <div className="card-group hidden min-h-[320px] overflow-hidden lg:block lg:h-[calc(100vh-200px)]">
+        <AnimatePresence mode="wait" initial={false}>
+          {!selectedMail ? (
+            <motion.div
+              key="empty"
+              className="flex h-full flex-col items-center justify-center py-24"
+              style={{ color: "var(--fg-tertiary)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="opacity-60">
+                <Icon name="mail-open" size={52} strokeWidth={1.5} />
+              </div>
+              <p className="mt-3 text-[14px]">选择一封邮件查看详情</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={selectedMail.id}
+              className="h-full"
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            >
+              <MailDetail
+                mail={selectedMail}
+                onDelete={() => onDelete(selectedMail.id)}
+                onCopy={copy}
+                settings={settings}
+                onToggleRead={onToggleRead}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 移动端全屏详情 */}
-      {mobileDetailOpen && selectedMail && (
-        <div className="fixed inset-0 z-40 flex flex-col lg:hidden">
-          <div
-            className="flex h-12 shrink-0 items-center justify-between px-3"
-            style={{ background: "var(--glass)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "0.5px solid var(--separator)" }}
+      <AnimatePresence>
+        {mobileDetailOpen && selectedMail && (
+          <motion.div
+            className="fixed inset-0 z-40 flex flex-col lg:hidden"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 32 }}
           >
-            <button
-              onClick={onCloseMobile}
-              className="pressable flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ background: "var(--fill)", color: "var(--fg)" }}
-              aria-label="返回"
+            <div
+              className="flex h-12 shrink-0 items-center justify-between px-3"
+              style={{ background: "var(--glass)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "0.5px solid var(--separator)" }}
             >
-              <Icon name="arrow-left" size={17} />
-            </button>
-            <span className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>邮件详情</span>
-            <span className="w-8" />
-          </div>
-          <div className="min-h-0 flex-1">
-            <MailDetail
-              mail={selectedMail}
-              onDelete={() => {
-                onCloseMobile();
-                onDelete(selectedMail.id);
-              }}
-              onCopy={copy}
-              settings={settings}
-              onToggleRead={onToggleRead}
-            />
-          </div>
-        </div>
-      )}
+              <button
+                onClick={onCloseMobile}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                style={{ background: "var(--fill)", color: "var(--fg)" }}
+                aria-label="返回"
+              >
+                <Icon name="arrow-left" size={17} />
+              </button>
+              <span className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>邮件详情</span>
+              <span className="w-8" />
+            </div>
+            <div className="min-h-0 flex-1">
+              <MailDetail
+                mail={selectedMail}
+                onDelete={() => {
+                  onCloseMobile();
+                  onDelete(selectedMail.id);
+                }}
+                onCopy={copy}
+                settings={settings}
+                onToggleRead={onToggleRead}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -606,11 +639,19 @@ function MailListItem({
 }) {
   const isUnread = mail.is_unread === 1;
   return (
-    <li
-      className="list-item-in"
-      style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -40, height: 0, marginBottom: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 32, delay: Math.min(index * 0.03, 0.3) }}
     >
-      <button onClick={onClick} className={`card-row w-full text-left ${active ? "active" : ""}`}>
+      <motion.button
+        onClick={onClick}
+        className={`card-row w-full text-left ${active ? "active" : ""}`}
+        whileHover={{ backgroundColor: "var(--bg-tertiary)" }}
+        transition={{ duration: 0.12 }}
+      >
         {/* 头像 */}
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[16px] font-semibold text-white"
@@ -639,8 +680,8 @@ function MailListItem({
             {extractTextPreview(mail.text || mail.html) || mail.source}
           </span>
         </span>
-      </button>
-    </li>
+      </motion.button>
+    </motion.li>
   );
 }
 

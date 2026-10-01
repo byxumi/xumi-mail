@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, GroupLabel, FormRow, LoadingButton, Segmented, Switch, Spinner, Avatar, ConfirmDialog } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
 
@@ -100,15 +101,17 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <MotionPage className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-5xl px-3 py-4 md:px-4 md:py-6">
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
           <div>
-            <h1 className="large-title">管理后台</h1>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-              系统状态与运维
-            </p>
+            <FadeUp>
+              <h1 className="large-title">管理后台</h1>
+              <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+                系统状态与运维
+              </p>
+            </FadeUp>
           </div>
           <div className="flex items-center gap-2">
             <Segmented
@@ -258,7 +261,7 @@ export default function AdminPage() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
-    </div>
+    </MotionPage>
   );
 }
 

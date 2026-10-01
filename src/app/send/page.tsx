@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { FadeUp, MotionPage } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { api, formatTime } from "@/lib/client";
@@ -121,15 +122,18 @@ export default function SendPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <MotionPage className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-6">
-        <h1 className="large-title">发送邮件</h1>
-        <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-          发件地址：<span className="font-medium" style={{ color: "var(--accent)" }}>{address}</span>
-        </p>
+        <FadeUp>
+          <h1 className="large-title">发送邮件</h1>
+          <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+            发件地址：<span className="font-medium" style={{ color: "var(--accent)" }}>{address}</span>
+          </p>
+        </FadeUp>
 
         {/* 表单 */}
+        <FadeUp delay={0.08}>
         <div className="card-group mt-5 p-5">
           <div className="flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
             <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>
@@ -220,8 +224,10 @@ export default function SendPage() {
             发送
           </LoadingButton>
         </div>
+        </FadeUp>
 
         {/* 已发送 */}
+        <FadeUp delay={0.16}>
         <h2 className="mb-2 mt-8 px-1 text-[20px] font-bold" style={{ color: "var(--fg)" }}>
           已发送
         </h2>
@@ -258,8 +264,9 @@ export default function SendPage() {
             </ul>
           </div>
         )}
+        </FadeUp>
       </main>
       <div style={{ height: 40 }} />
-    </div>
+    </MotionPage>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/hooks/useTheme";
@@ -165,13 +166,15 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <MotionPage className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-6">
-        <h1 className="large-title">账号</h1>
-        <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-          Xumi Mail 设置
-        </p>
+        <FadeUp>
+          <h1 className="large-title">账号</h1>
+          <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+            Xumi Mail 设置
+          </p>
+        </FadeUp>
 
         {token ? (
           <>
@@ -426,6 +429,6 @@ export default function AccountPage() {
           </div>
         )}
       </main>
-    </div>
+    </MotionPage>
   );
 }

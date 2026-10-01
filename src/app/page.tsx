@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Zap, ShieldCheck, Target, KeyRound, Gift, Send, Hash, Inbox, Trash2, Mail, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { spring, springSoft, LogoPop, FadeUp, MotionList, MotionItem, HoverCard } from "@/components/motion";
+import { useState } from "react";
 
 const FEATURES = [
   { icon: Zap, title: "秒级收信", desc: "邮件到达即刻解析，验证码自动提取" },
@@ -42,9 +47,11 @@ export default function HomePage() {
     <main className="overflow-hidden" style={{ minHeight: "100vh" }}>
       {/* Hero */}
       <section className="relative px-6 pb-14 pt-16 text-center sm:pt-24">
-        {/* 背景光斑 */}
-        <div
+        {/* 背景光斑（缓慢浮动） */}
+        <motion.div
           className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[820px] -translate-x-1/2 rounded-full opacity-40 blur-3xl"
+          animate={{ y: [0, -16, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           style={{
             background:
               "radial-gradient(closest-side, rgba(10,132,255,0.28), rgba(94,92,230,0.2), transparent)",
@@ -52,155 +59,184 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-2xl shadow-blue-500/40">
-            <Mail size={48} strokeWidth={1.6} />
-          </div>
+          <LogoPop>
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-2xl shadow-blue-500/40">
+              <Mail size={48} strokeWidth={1.6} />
+            </div>
+          </LogoPop>
 
-          <h1 className="large-title mt-8" style={{ color: "var(--fg)" }}>
+          <motion.h1
+            className="large-title mt-8"
+            style={{ color: "var(--fg)" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springSoft, delay: 0.12 }}
+          >
             Xumi Mail
-          </h1>
+          </motion.h1>
 
-          <p className="mx-auto mt-4 max-w-md text-[17px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
+          <motion.p
+            className="mx-auto mt-4 max-w-md text-[17px] leading-relaxed"
+            style={{ color: "var(--fg-secondary)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springSoft, delay: 0.22 }}
+          >
             免费、安全、即开即用的临时邮箱。
             <br />
             收验证码、防骚扰、保护隐私，用完即弃。
-          </p>
+          </motion.p>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/mail"
-              className="btn-primary w-64 text-center text-[17px]"
-              style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
-            >
-              立即创建邮箱
-            </Link>
-          </div>
+          <motion.div
+            className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springSoft, delay: 0.32 }}
+          >
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={spring}>
+              <Link
+                href="/mail"
+                className="btn-primary w-64 text-center text-[17px]"
+                style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
+              >
+                立即创建邮箱
+              </Link>
+            </motion.div>
+          </motion.div>
 
           {/* 域名标签 */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <motion.div
+            className="mt-6 flex flex-wrap items-center justify-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45, duration: 0.5 }}
+          >
             {DOMAINS.map((d) => (
-              <span
+              <motion.span
                 key={d}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-medium"
                 style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                whileHover={{ scale: 1.06, y: -1 }}
+                transition={spring}
               >
                 <Mail size={13} />
                 {d}
-              </span>
+              </motion.span>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* 特性 */}
       <section className="mx-auto max-w-4xl px-6">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <MotionList className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" gap={0}>
           {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-3xl p-5 text-left shadow-sm backdrop-blur"
-              style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
-            >
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-[14px]"
-                style={{ background: "var(--fill)", color: "var(--accent)" }}
+            <MotionItem key={f.title}>
+              <HoverCard
+                className="rounded-3xl p-5 text-left shadow-sm backdrop-blur"
+                style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
               >
-                <f.icon size={22} strokeWidth={1.8} />
-              </div>
-              <h3 className="mt-3 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
-                {f.title}
-              </h3>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
-                {f.desc}
-              </p>
-            </div>
+                <motion.div
+                  className="flex h-11 w-11 items-center justify-center rounded-[14px]"
+                  style={{ background: "var(--fill)", color: "var(--accent)" }}
+                  whileHover={{ rotate: -6, scale: 1.08 }}
+                  transition={spring}
+                >
+                  <f.icon size={22} strokeWidth={1.8} />
+                </motion.div>
+                <h3 className="mt-3 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
+                  {f.title}
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
+                  {f.desc}
+                </p>
+              </HoverCard>
+            </MotionItem>
           ))}
-        </div>
+        </MotionList>
       </section>
 
       {/* 使用步骤 */}
       <section className="mx-auto mt-16 max-w-4xl px-6">
-        <h2 className="text-center text-[26px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
-          三步开始使用
-        </h2>
+        <FadeUp>
+          <h2 className="text-center text-[26px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
+            三步开始使用
+          </h2>
+        </FadeUp>
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <div
-              key={s.no}
-              className="relative rounded-3xl p-5"
-              style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
-            >
-              <span className="text-[12px] font-bold tracking-widest" style={{ color: "var(--accent)" }}>
-                {s.no}
-              </span>
-              <div className="mt-2" style={{ color: "var(--accent)" }}>
-                <s.icon size={30} strokeWidth={1.8} />
-              </div>
-              <h3 className="mt-2 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
-                {s.title}
-              </h3>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
-                {s.desc}
-              </p>
-            </div>
+          {STEPS.map((s, i) => (
+            <FadeUp key={s.no} delay={i * 0.1}>
+              <HoverCard
+                className="relative rounded-3xl p-5"
+                style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+                whileHover={{ y: -4 }}
+              >
+                <span className="text-[12px] font-bold tracking-widest" style={{ color: "var(--accent)" }}>
+                  {s.no}
+                </span>
+                <motion.div
+                  className="mt-2"
+                  style={{ color: "var(--accent)" }}
+                  whileHover={{ rotate: 8, scale: 1.06 }}
+                  transition={spring}
+                >
+                  <s.icon size={30} strokeWidth={1.8} />
+                </motion.div>
+                <h3 className="mt-2 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
+                  {s.title}
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
+                  {s.desc}
+                </p>
+              </HoverCard>
+            </FadeUp>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ（AnimatePresence 展开动画） */}
       <section className="mx-auto mt-16 max-w-2xl px-6">
-        <h2 className="text-center text-[26px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
-          常见问题
-        </h2>
+        <FadeUp>
+          <h2 className="text-center text-[26px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
+            常见问题
+          </h2>
+        </FadeUp>
         <div className="mt-6 space-y-3">
           {FAQS.map((f) => (
-            <details
-              key={f.q}
-              className="group rounded-2xl p-5"
-              style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
-            >
-              <summary
-                className="flex cursor-pointer list-none items-center justify-between text-[15px] font-semibold"
-                style={{ color: "var(--fg)" }}
-              >
-                {f.q}
-                <Plus
-                  className="shrink-0 transition-transform duration-200 group-open:rotate-45"
-                  size={16}
-                  style={{ color: "var(--fg-tertiary)" }}
-                />
-              </summary>
-              <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
-                {f.a}
-              </p>
-            </details>
+            <FaqItem key={f.q} q={f.q} a={f.a} />
           ))}
         </div>
       </section>
 
       {/* 底部 CTA */}
       <section className="mx-auto mt-16 max-w-2xl px-6 pb-8 text-center">
-        <div
-          className="rounded-[28px] p-8 sm:p-10"
-          style={{
-            background: "linear-gradient(135deg, rgba(10,132,255,0.12), rgba(94,92,230,0.14))",
-            border: "0.5px solid var(--separator)",
-          }}
-        >
-          <h2 className="text-[24px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
-            现在就开始保护你的隐私
-          </h2>
-          <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
-            无需注册，10 秒内创建你的第一个临时邮箱地址
-          </p>
-          <Link
-            href="/mail"
-            className="btn-primary mt-6 inline-block min-w-[220px] text-center"
-            style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
+        <FadeUp>
+          <motion.div
+            className="rounded-[28px] p-8 sm:p-10"
+            whileHover={{ scale: 1.01 }}
+            transition={springSoft}
+            style={{
+              background: "linear-gradient(135deg, rgba(10,132,255,0.12), rgba(94,92,230,0.14))",
+              border: "0.5px solid var(--separator)",
+            }}
           >
-            免费创建临时邮箱
-          </Link>
-        </div>
+            <h2 className="text-[24px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
+              现在就开始保护你的隐私
+            </h2>
+            <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
+              无需注册，10 秒内创建你的第一个临时邮箱地址
+            </p>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }} transition={spring}>
+              <Link
+                href="/mail"
+                className="btn-primary mt-6 inline-block min-w-[220px] text-center"
+                style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
+              >
+                免费创建临时邮箱
+              </Link>
+            </motion.div>
+          </motion.div>
+        </FadeUp>
       </section>
 
       {/* 底部 */}
@@ -211,5 +247,51 @@ export default function HomePage() {
         Xumi Mail · 基于 Cloudflare Workers 构建 · 免费使用
       </footer>
     </main>
+  );
+}
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.div
+      className="rounded-2xl overflow-hidden"
+      style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={springSoft}
+    >
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full cursor-pointer list-none items-center justify-between px-5 py-4 text-[15px] font-semibold"
+        style={{ color: "var(--fg)" }}
+      >
+        {q}
+        <motion.span
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={spring}
+          className="shrink-0"
+          style={{ color: "var(--fg-tertiary)" }}
+        >
+          <Plus size={16} />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={springSoft}
+            style={{ overflow: "hidden" }}
+          >
+            <p className="px-5 pb-4 text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
+              {a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
