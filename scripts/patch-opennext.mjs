@@ -13,6 +13,7 @@ const target = join(
   "node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js"
 );
 
+// 插件定义（插在全部 import 之后）
 const PLUGIN_DEF = `
 const cloudflareExternalPlugin = () => ({
     name: "cloudflare-externals",
@@ -35,13 +36,13 @@ if (src.includes("cloudflareExternalPlugin")) {
   process.exit(0);
 }
 
-// 1) 在 setWranglerExternal import 行后插入插件定义
-const marker = "import { setWranglerExternal }";
-if (!src.includes(marker)) {
-  console.error("未找到注入点（import { setWranglerExternal }）");
+// 1) 在最后一条 import（needsExperimentalReact）之后插入插件定义
+const importAnchor = `import { needsExperimentalReact } from "./utils/needs-experimental-react.js";`;
+if (!src.includes(importAnchor)) {
+  console.error("未找到注入点（needsExperimentalReact import）");
   process.exit(1);
 }
-src = src.replace(marker, marker + "\n" + PLUGIN_DEF);
+src = src.replace(importAnchor, importAnchor + "\n" + PLUGIN_DEF);
 
 // 2) 在 plugins 数组首元素前插入插件调用
 const pluginsStart = "plugins: [";
