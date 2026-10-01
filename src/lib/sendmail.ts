@@ -156,7 +156,9 @@ export const sendMail = async (
         contentType: reqJson.is_html ? "text/html" : "text/plain",
         data: content,
       });
-      const { EmailMessage } = await import("cloudflare:email");
+      // 用变量形式动态 import，避免 esbuild 静态解析 cloudflare: 运行时模块
+      const cfEmailModuleName = "cloudflare:email";
+      const { EmailMessage } = await import(cfEmailModuleName);
       const message = new EmailMessage(address, to_mail, msg.asRaw());
       await env.SEND_MAIL.send(message);
       sendByVerifiedAddressList = true;

@@ -41,7 +41,9 @@ export const auto_reply = async (
         contentType: "text/plain",
         data: results.message || "This is an auto-reply message, please reconact later.",
       });
-      const { EmailMessage } = await import("cloudflare:email");
+      // 用变量形式动态 import，避免 esbuild 静态解析 cloudflare: 运行时模块
+      const cfEmailModuleName = "cloudflare:email";
+      const { EmailMessage } = await import(cfEmailModuleName);
       const replyMessage = new EmailMessage(toAddress, from, msg.asRaw());
       await reply(replyMessage);
     }
