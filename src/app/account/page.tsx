@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
+import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/hooks/useTheme";
@@ -199,15 +200,15 @@ export default function AccountPage() {
             <GroupLabel>邮箱功能</GroupLabel>
             <div className="card-group">
               {settings?.enableAddressPassword && (
-                <FormRow icon="🔑" label="地址密码" onClick={() => setShowPwd((v) => !v)} />
+                <FormRow iconName="key" label="地址密码" onClick={() => setShowPwd((v) => !v)} />
               )}
               {settings?.enableAutoReply && (
-                <FormRow icon="🤖" label="自动回复" onClick={() => setShowAutoReply((v) => !v)} />
+                <FormRow iconName="bot" label="自动回复" onClick={() => setShowAutoReply((v) => !v)} />
               )}
               {settings?.enableWebhook && (
-                <FormRow icon="🪝" label="Webhook 通知" onClick={() => setShowWebhook((v) => !v)} />
+                <FormRow iconName="webhook" label="Webhook 通知" onClick={() => setShowWebhook((v) => !v)} />
               )}
-              <FormRow icon="👤" label="用户账号" onClick={() => setShowUser((v) => !v)} />
+              <FormRow iconName="user" label="用户账号" onClick={() => setShowUser((v) => !v)} />
             </div>
 
             {/* 外观设置 */}
@@ -215,8 +216,8 @@ export default function AccountPage() {
             <div className="card-group">
               <div className="card-row justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[14px]" style={{ background: "var(--fill)" }}>
-                    🎨
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--fill)", color: "var(--accent)" }}>
+                    <Icon name="palette" size={15} />
                   </span>
                   <span className="text-[16px]" style={{ color: "var(--fg)" }}>
                     主题
@@ -242,8 +243,8 @@ export default function AccountPage() {
               </div>
               <div className="card-row justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[14px]" style={{ background: "var(--fill)" }}>
-                    🌑
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ background: "var(--fill)", color: "var(--accent)" }}>
+                    <Icon name="moon" size={15} />
                   </span>
                   <span className="flex-1 text-[16px]" style={{ color: "var(--fg)" }}>
                     纯黑 OLED 模式
@@ -339,7 +340,9 @@ export default function AccountPage() {
                 <div className="p-5">
                   {userLoggedIn ? (
                     <div className="text-center">
-                      <div className="text-4xl">👤</div>
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--fill)", color: "var(--accent)" }}>
+                        <Icon name="user" size={28} />
+                      </div>
                       <p className="mt-2 text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
                         {tokenStore.getUser() ? "已登录" : "未登录"}
                       </p>
@@ -400,7 +403,7 @@ export default function AccountPage() {
             <div className="card-group">
               <FormRow
                 danger
-                icon="🗑️"
+                iconName="trash"
                 label="删除当前地址"
                 onClick={deleteAddress}
               />
@@ -412,7 +415,9 @@ export default function AccountPage() {
         ) : (
           <div className="card-group mt-6">
             <div className="empty-state">
-              <div className="icon">👋</div>
+              <div className="icon">
+                <Icon name="mail" size={56} strokeWidth={1.5} />
+              </div>
               <p className="text-[17px] font-semibold" style={{ color: "var(--fg-secondary)" }}>
                 尚未创建邮箱地址
               </p>

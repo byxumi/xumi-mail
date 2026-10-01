@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton, Spinner, Segmented, useCopy, SearchInput, ConfirmDialog } from "@/components/ui";
+import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings, useInterval } from "@/hooks/useSettings";
 import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex } from "@/lib/client";
@@ -194,7 +195,9 @@ export default function MailPage() {
       <div className="min-h-screen">
         <Header />
         <main className="mx-auto max-w-md px-4 py-20 text-center">
-          <div className="text-5xl">🔒</div>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl" style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}>
+            <Icon name="lock" size={30} />
+          </div>
           <h1 className="large-title mt-4">此站点需要访问密码</h1>
           <p className="mt-2 text-[15px]" style={{ color: "var(--fg-secondary)" }}>
             该站点配置了访问控制（PASSWORDS），请联系站长获取访问密码。
@@ -211,8 +214,8 @@ export default function MailPage() {
         <Header />
         <main className="mx-auto max-w-md px-4 pb-16 pt-12">
           <div className="text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-4xl shadow-lg shadow-blue-500/30">
-              📬
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-lg shadow-blue-500/30">
+              <Icon name="mailbox" size={36} strokeWidth={1.7} />
             </div>
             <h1 className="large-title mt-6">创建临时邮箱</h1>
             <p className="mt-2 text-[15px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
@@ -311,9 +314,9 @@ export default function MailPage() {
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-6 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-            <span>🔒 邮件仅保存 7 天</span>
-            <span>🆓 完全免费</span>
-            <span>⚡ 即时收信</span>
+            <span className="flex items-center gap-1.5"><Icon name="lock" size={14} /> 邮件仅保存 7 天</span>
+            <span className="flex items-center gap-1.5"><Icon name="gift" size={14} /> 完全免费</span>
+            <span className="flex items-center gap-1.5"><Icon name="zap" size={14} /> 即时收信</span>
           </div>
         </main>
       </div>
@@ -339,11 +342,12 @@ export default function MailPage() {
             {tab === "inbox" && unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="pressable shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium"
+                className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium"
                 style={{ background: "var(--fill)", color: "var(--accent)" }}
                 title="全部标为已读"
               >
-                ✓ 全部已读
+                <Icon name="check-check" size={15} />
+                全部已读
               </button>
             )}
             <Segmented
@@ -458,10 +462,13 @@ function AddressChip({ address, onCopy }: { address: string; onCopy: (t: string,
       title="点击复制"
     >
       <span className="flex items-center gap-2 truncate text-[15px] font-medium" style={{ color: "var(--fg)" }}>
-        <span className="text-[15px]">📧</span>
+        <span style={{ color: "var(--accent)" }}>
+          <Icon name="at-sign" size={17} />
+        </span>
         <span className="truncate">{address}</span>
       </span>
-      <span className="ml-2 shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium text-white" style={{ background: "var(--accent)" }}>
+      <span className="ml-2 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-medium text-white" style={{ background: "var(--accent)" }}>
+        <Icon name="copy" size={12} strokeWidth={2.2} />
         复制
       </span>
     </button>
@@ -505,7 +512,7 @@ function InboxView({
           </div>
         ) : inbox.length === 0 ? (
           <EmptyState
-            icon="📭"
+            iconName="inbox"
             title="暂无邮件"
             description="地址已就绪，去注册网站收一封测试邮件吧"
           />
@@ -532,7 +539,9 @@ function InboxView({
       <div className="card-group hidden min-h-[320px] lg:block lg:h-[calc(100vh-200px)]">
         {!selectedMail ? (
           <div className="flex h-full flex-col items-center justify-center py-24" style={{ color: "var(--fg-tertiary)" }}>
-            <div className="text-5xl opacity-60">✉️</div>
+            <div className="opacity-60">
+              <Icon name="mail-open" size={52} strokeWidth={1.5} />
+            </div>
             <p className="mt-3 text-[14px]">选择一封邮件查看详情</p>
           </div>
         ) : (
@@ -555,11 +564,11 @@ function InboxView({
           >
             <button
               onClick={onCloseMobile}
-              className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[16px]"
-              style={{ background: "var(--fill)" }}
+              className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+              style={{ background: "var(--fill)", color: "var(--fg)" }}
               aria-label="返回"
             >
-              ←
+              <Icon name="arrow-left" size={17} />
             </button>
             <span className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>邮件详情</span>
             <span className="w-8" />
@@ -663,20 +672,23 @@ function MailDetail({
             {onToggleRead && (
               <button
                 onClick={() => onToggleRead(mail.id, mail.is_unread !== 1)}
-                className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[15px]"
-                style={{ background: mail.is_unread === 1 ? "rgba(0,122,255,0.15)" : "var(--fill)" }}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                style={{
+                  background: mail.is_unread === 1 ? "rgba(0,122,255,0.15)" : "var(--fill)",
+                  color: mail.is_unread === 1 ? "var(--accent)" : "var(--fg-tertiary)",
+                }}
                 title={mail.is_unread === 1 ? "标为已读" : "标为未读"}
               >
-                {mail.is_unread === 1 ? "⚪" : "◉"}
+                <Icon name={mail.is_unread === 1 ? "circle-dot" : "circle-check"} size={17} />
               </button>
             )}
             <button
               onClick={onDelete}
-              className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px]"
-              style={{ background: "var(--fill)" }}
+              className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
               title="删除"
             >
-              🗑️
+              <Icon name="trash" size={16} />
             </button>
           </div>
         </div>
@@ -728,7 +740,8 @@ function MailDetail({
                 className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px]"
                 style={{ borderColor: "var(--separator)", color: "var(--fg-secondary)" }}
               >
-                📎 {att.filename}
+                <Icon name="paperclip" size={14} />
+                {att.filename}
                 <span className="text-[11px]" style={{ color: "var(--fg-tertiary)" }}>
                   {fmtSize(att.size)}
                 </span>
@@ -756,7 +769,7 @@ function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => v
   if (sent.length === 0) {
     return (
       <div className="card-group mt-4">
-        <EmptyState icon="📤" title="暂无已发送邮件" description="发邮件后会显示在这里" />
+        <EmptyState iconName="send" title="暂无已发送邮件" description="发邮件后会显示在这里" />
       </div>
     );
   }
@@ -773,10 +786,10 @@ function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => v
           return (
             <li key={item.id} className="card-row">
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[16px] text-white"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
                 style={{ background: "linear-gradient(135deg,#34c759,#0a84ff)" }}
               >
-                ➤
+                <Icon name="send" size={17} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
@@ -791,11 +804,11 @@ function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => v
               </span>
               <button
                 onClick={() => onDelete(item.id)}
-                className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
-                style={{ background: "var(--fill)" }}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
                 title="删除"
               >
-                🗑️
+                <Icon name="trash" size={15} />
               </button>
             </li>
           );

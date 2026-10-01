@@ -1,18 +1,19 @@
 import Link from "next/link";
+import { Zap, ShieldCheck, Target, KeyRound, Gift, Send, Hash, Inbox, Trash2, Mail, Plus } from "lucide-react";
 
 const FEATURES = [
-  { icon: "⚡", title: "秒级收信", desc: "邮件到达即刻解析，验证码自动提取" },
-  { icon: "🛡️", title: "隐私安全", desc: "收件自动清理，不追踪不记录" },
-  { icon: "🎯", title: "随机隔离", desc: "每个账号独立地址，防追踪防垃圾" },
-  { icon: "🔑", title: "密码登录", desc: "邮箱地址绑定密码，多设备随时查看" },
-  { icon: "🆓", title: "完全免费", desc: "基于 Cloudflare 零成本运行，无广告" },
-  { icon: "📤", title: "临时发件", desc: "一键发送测试邮件，发件箱自动留存" },
+  { icon: Zap, title: "秒级收信", desc: "邮件到达即刻解析，验证码自动提取" },
+  { icon: ShieldCheck, title: "隐私安全", desc: "收件自动清理，不追踪不记录" },
+  { icon: Target, title: "随机隔离", desc: "每个账号独立地址，防追踪防垃圾" },
+  { icon: KeyRound, title: "密码登录", desc: "邮箱地址绑定密码，多设备随时查看" },
+  { icon: Gift, title: "完全免费", desc: "基于 Cloudflare 零成本运行，无广告" },
+  { icon: Send, title: "临时发件", desc: "一键发送测试邮件，发件箱自动留存" },
 ];
 
 const STEPS = [
-  { no: "01", icon: "🔢", title: "创建地址", desc: "随机前缀或自定义，一键生成专属临时邮箱" },
-  { no: "02", icon: "📥", title: "收取邮件", desc: "验证码、链接自动提取高亮，15 秒自动刷新" },
-  { no: "03", icon: "🗑️", title: "用完即弃", desc: "无需注册，随时清空或删除，隐私不留痕" },
+  { no: "01", icon: Hash, title: "创建地址", desc: "随机前缀或自定义，一键生成专属临时邮箱" },
+  { no: "02", icon: Inbox, title: "收取邮件", desc: "验证码、链接自动提取高亮，15 秒自动刷新" },
+  { no: "03", icon: Trash2, title: "用完即弃", desc: "无需注册，随时清空或删除，隐私不留痕" },
 ];
 
 const DOMAINS = ["xumimail.click", "xumimail.help"];
@@ -51,8 +52,8 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-5xl shadow-2xl shadow-blue-500/40">
-            📬
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-2xl shadow-blue-500/40">
+            <Mail size={48} strokeWidth={1.6} />
           </div>
 
           <h1 className="large-title mt-8" style={{ color: "var(--fg)" }}>
@@ -80,10 +81,11 @@ export default function HomePage() {
             {DOMAINS.map((d) => (
               <span
                 key={d}
-                className="rounded-full px-3 py-1 text-[13px] font-medium"
+                className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-medium"
                 style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
               >
-                📧 {d}
+                <Mail size={13} />
+                {d}
               </span>
             ))}
           </div>
@@ -99,8 +101,11 @@ export default function HomePage() {
               className="rounded-3xl p-5 text-left shadow-sm backdrop-blur"
               style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] text-[22px]" style={{ background: "var(--fill)" }}>
-                {f.icon}
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-[14px]"
+                style={{ background: "var(--fill)", color: "var(--accent)" }}
+              >
+                <f.icon size={22} strokeWidth={1.8} />
               </div>
               <h3 className="mt-3 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
                 {f.title}
@@ -128,7 +133,9 @@ export default function HomePage() {
               <span className="text-[12px] font-bold tracking-widest" style={{ color: "var(--accent)" }}>
                 {s.no}
               </span>
-              <div className="mt-2 text-[30px]">{s.icon}</div>
+              <div className="mt-2" style={{ color: "var(--accent)" }}>
+                <s.icon size={30} strokeWidth={1.8} />
+              </div>
               <h3 className="mt-2 text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
                 {s.title}
               </h3>
@@ -157,12 +164,11 @@ export default function HomePage() {
                 style={{ color: "var(--fg)" }}
               >
                 {f.q}
-                <span
-                  className="shrink-0 text-[16px] transition-transform duration-200 group-open:rotate-45"
+                <Plus
+                  className="shrink-0 transition-transform duration-200 group-open:rotate-45"
+                  size={16}
                   style={{ color: "var(--fg-tertiary)" }}
-                >
-                  ＋
-                </span>
+                />
               </summary>
               <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
                 {f.a}

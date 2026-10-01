@@ -71,6 +71,8 @@ export interface Env {
   ENABLE_AGENT_EMAIL_INFO?: string;
   ENABLE_REDEEM_CODE?: string;
   REDEEM_CODE_URL?: string;
+  ADMIN_USER_ROLE?: string;
+  USER_DEFAULT_ROLE?: string;
   SMTP_IMAP_PROXY_CONFIG?: string;
   USER_ROLES?: string;
 

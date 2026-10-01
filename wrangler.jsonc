@@ -24,6 +24,7 @@
     "ENABLE_MAIL_READ_STATUS": "true",
     "ENABLE_WEBHOOK": "false",
     "ENABLE_ADDRESS_PASSWORD": "false",
+    "ENABLE_REDEEM_CODE": "true",
     "AI_EXTRACT_MODE": "local",
     "DEFAULT_LANG": "zh",
     "COPYRIGHT": "Xumi Mail"

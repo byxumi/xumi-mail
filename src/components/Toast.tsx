@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState, ReactNode } from "react";
+import { Check, X, Info } from "lucide-react";
 
 type ToastType = "info" | "success" | "error";
 
@@ -25,10 +26,10 @@ const colors: Record<ToastType, string> = {
   info: "var(--accent)",
 };
 
-const icons: Record<ToastType, string> = {
-  success: "✓",
-  error: "✕",
-  info: "ⓘ",
+const iconCmp: Record<ToastType, any> = {
+  success: Check,
+  error: X,
+  info: Info,
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -70,7 +71,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={`toast-item pointer-events-auto ${t.leaving ? "leave" : ""}`}
             style={{ background: "var(--glass)", color: colors[t.type], border: "0.5px solid var(--separator)" }}
           >
-            <span className="mr-1 font-bold">{icons[t.type]}</span>
+            <span className="mr-1 flex items-center">
+              {(() => {
+                const Cmp = iconCmp[t.type];
+                return <Cmp size={13} strokeWidth={2.5} />;
+              })()}
+            </span>
             {t.message}
           </button>
         ))}

@@ -246,6 +246,27 @@ export const api = {
       { auth: "user" }
     ),
 
+  // 兑换码（用户）
+  redeem: (body: {
+    code: string;
+    user_email?: string;
+    address?: string;
+    name?: string;
+    domain?: string;
+    enableRandomSubdomain?: boolean;
+  }) => request<any>("/api/redeem", { method: "POST", body }),
+
+  // 兑换码（管理）
+  adminRedeemCodes: (params: { redeem_type: string; limit?: number; offset?: number; query?: string }) =>
+    request<any>(
+      `/api/admin/redeem?redeem_type=${encodeURIComponent(params.redeem_type)}&limit=${params.limit ?? 20}&offset=${params.offset ?? 0}${params.query ? `&query=${encodeURIComponent(params.query)}` : ""}`,
+      { auth: "admin" }
+    ),
+  adminCreateRedeemCodes: (body: { count: number; redeem_type: string; value: string; enabled: boolean; expires_at: string }) =>
+    request<any>("/api/admin/redeem", { method: "POST", body, auth: "admin" }),
+  adminDeleteRedeemCode: (id: number) =>
+    request<{ success: boolean }>(`/api/admin/redeem?id=${id}`, { method: "DELETE", auth: "admin" }),
+
   // 管理
   adminStatistics: () => request<any>("/api/admin/statistics", { auth: "admin" }),
   adminMails: (params: { limit?: number; offset?: number; address?: string }) =>

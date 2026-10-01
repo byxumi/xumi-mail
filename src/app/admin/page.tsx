@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, GroupLabel, FormRow, LoadingButton, Segmented, Switch, Spinner, Avatar, ConfirmDialog } from "@/components/ui";
+import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
 
-type Tab = "stats" | "mails" | "addresses" | "users" | "settings";
+type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "settings";
 
 export default function AdminPage() {
   const { push } = useToast();
@@ -73,8 +74,8 @@ export default function AdminPage() {
       <div className="min-h-screen">
         <Header />
         <main className="mx-auto max-w-sm px-4 pb-16 pt-16 text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#5856d6] to-[#af52de] text-4xl shadow-lg shadow-purple-500/30">
-            🛡️
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#5856d6] to-[#af52de] text-white shadow-lg shadow-purple-500/30">
+            <Icon name="shield" size={38} strokeWidth={1.7} />
           </div>
           <h1 className="large-title mt-6">管理员</h1>
           <p className="mt-2 text-[14px]" style={{ color: "var(--fg-secondary)" }}>
@@ -118,6 +119,7 @@ export default function AdminPage() {
                 { value: "mails", label: "邮件" },
                 { value: "addresses", label: "地址" },
                 { value: "users", label: "用户" },
+                { value: "redeem", label: "兑换码" },
                 { value: "settings", label: "清理" },
               ]}
             />
@@ -184,6 +186,7 @@ export default function AdminPage() {
             onDelete={(u) => setConfirmAction({ type: "delete-user", id: u.id, name: u.user_email })}
           />
         )}
+        {tab === "redeem" && <RedeemAdminView />}
         {tab === "settings" && cleanup && (
           <CleanupView
             cleanup={cleanup}
@@ -262,21 +265,21 @@ export default function AdminPage() {
 /* ---------- 统计 ---------- */
 function StatsView({ stats }: { stats: any }) {
   const items = [
-    { label: "地址数", value: stats.address, icon: "📧", color: "#007aff" },
-    { label: "邮件总数", value: stats.mail, icon: "📨", color: "#34c759" },
-    { label: "今日邮件", value: stats.todayMail, icon: "🔥", color: "#ff9500" },
-    { label: "用户数", value: stats.user, icon: "👤", color: "#af52de" },
-    { label: "已发送", value: stats.sent, icon: "📤", color: "#5ac8fa" },
+    { label: "地址数", value: stats.address, icon: "at-sign" as const, color: "#007aff" },
+    { label: "邮件总数", value: stats.mail, icon: "inbox" as const, color: "#34c759" },
+    { label: "今日邮件", value: stats.todayMail, icon: "flame" as const, color: "#ff9500" },
+    { label: "用户数", value: stats.user, icon: "users" as const, color: "#af52de" },
+    { label: "已发送", value: stats.sent, icon: "send" as const, color: "#5ac8fa" },
   ];
   return (
     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {items.map((item) => (
         <div key={item.label} className="card-group stat-card p-4">
           <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-[18px] text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
             style={{ background: item.color, boxShadow: `0 6px 16px ${item.color}44` }}
           >
-            {item.icon}
+            <Icon name={item.icon} size={19} strokeWidth={2} />
           </span>
           <p className="mt-3 text-[28px] font-bold tabular-nums" style={{ color: "var(--fg)" }}>
             {item.value}
@@ -320,7 +323,7 @@ function MailsView({
       </div>
       <div className="card-group mt-3">
         {mails.length === 0 ? (
-          <EmptyState icon="📭" title="暂无邮件" />
+          <EmptyState iconName="inbox" title="暂无邮件" />
         ) : (
           <ul>
             {mails.map((mail) => {
@@ -341,7 +344,7 @@ function MailsView({
                     className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
                     style={{ background: "var(--fill)" }}
                   >
-                    🗑️
+                    <Icon name="trash" size={15} />
                   </button>
                 </li>
               );
@@ -392,7 +395,7 @@ function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; 
       </div>
       <div className="card-group mt-3">
         {addresses.length === 0 ? (
-          <EmptyState icon="📧" title="暂无地址" />
+          <EmptyState iconName="at-sign" title="暂无地址" />
         ) : (
           <ul>
             {addresses.map((addr) => (
@@ -411,7 +414,7 @@ function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; 
                   className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
                   style={{ background: "var(--fill)" }}
                 >
-                  🗑️
+                  <Icon name="trash" size={15} />
                 </button>
               </li>
             ))}
@@ -427,7 +430,7 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => vo
   return (
     <div className="card-group mt-5">
       {users.length === 0 ? (
-        <EmptyState icon="👤" title="暂无用户" />
+        <EmptyState iconName="users" title="暂无用户" />
       ) : (
         <ul>
           {users.map((user) => (
@@ -447,7 +450,7 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => vo
                 className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
                 style={{ background: "var(--fill)" }}
               >
-                🗑️
+                <Icon name="trash" size={15} />
               </button>
             </li>
           ))}
@@ -455,6 +458,226 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => vo
       )}
     </div>
   );
+}
+
+/* ---------- 兑换码管理 ---------- */
+type RedeemTypeKey = "role" | "send_balance" | "address_prefix_once";
+
+const REDEEM_TYPE_LABELS: Record<RedeemTypeKey, string> = {
+  role: "角色",
+  send_balance: "发信余额",
+  address_prefix_once: "地址前缀",
+};
+
+const REDEEM_TYPE_HINTS: Record<RedeemTypeKey, string> = {
+  role: "输入角色名（需在 USER_ROLES 中配置）",
+  send_balance: "输入发信余额数量（如 100）",
+  address_prefix_once: "输入地址前缀（如 vip）",
+};
+
+function RedeemAdminView() {
+  const { push } = useToast();
+  const [type, setType] = useState<RedeemTypeKey>("send_balance");
+  const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [count, setCount] = useState(1);
+  const [value, setValue] = useState("");
+  const [expiresHours, setExpiresHours] = useState(168); // 7 天
+  const [enabled, setEnabled] = useState(true);
+  const [query, setQuery] = useState("");
+
+  const load = useCallback(
+    async (t: RedeemTypeKey = type) => {
+      setLoading(true);
+      try {
+        const res = await api.adminRedeemCodes({ redeem_type: t, limit: 50, offset: 0, query: query || undefined });
+        setList(res.results || []);
+      } catch (e) {
+        push("error", (e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [type, query, push]
+  );
+
+  useEffect(() => {
+    void load(type);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
+  const create = async () => {
+    if (!value.trim()) {
+      push("error", "请填写兑换值");
+      return;
+    }
+    setCreating(true);
+    try {
+      const expiresAt = new Date(Date.now() + expiresHours * 3600_000).toISOString();
+      const res = await api.adminCreateRedeemCodes({
+        count,
+        redeem_type: type,
+        value: value.trim(),
+        enabled,
+        expires_at: expiresAt,
+      });
+      push("success", `已创建 ${res.created} 个兑换码`);
+      setValue("");
+      await load(type);
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const remove = async (id: number) => {
+    try {
+      await api.adminDeleteRedeemCode(id);
+      push("success", "已删除");
+      await load(type);
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  };
+
+  return (
+    <>
+      {/* 创建表单 */}
+      <div className="card-group mt-5 p-5">
+        <div className="segmented w-full">
+          {(Object.keys(REDEEM_TYPE_LABELS) as RedeemTypeKey[]).map((t) => (
+            <button
+              key={t}
+              className={type === t ? "active flex-1" : "flex-1"}
+              onClick={() => setType(t)}
+            >
+              {REDEEM_TYPE_LABELS[t]}
+            </button>
+          ))}
+        </div>
+
+        <p className="mb-1 mt-4 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+          {REDEEM_TYPE_HINTS[type]}
+        </p>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="兑换值"
+          className="ios-input"
+        />
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <p className="mb-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              生成数量
+            </p>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={count}
+              onChange={(e) => setCount(Math.max(1, Math.min(500, parseInt(e.target.value) || 1)))}
+              className="ios-input"
+            />
+          </div>
+          <div>
+            <p className="mb-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              有效期（小时）
+            </p>
+            <input
+              type="number"
+              min={1}
+              value={expiresHours}
+              onChange={(e) => setExpiresHours(parseInt(e.target.value) || 168)}
+              className="ios-input"
+            />
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-[14px]" style={{ color: "var(--fg-secondary)" }}>
+            启用
+          </span>
+          <Switch checked={enabled} onChange={setEnabled} />
+        </div>
+
+        <LoadingButton loading={creating} onClick={create} className="btn-primary mt-4 w-full">
+          生成兑换码
+        </LoadingButton>
+      </div>
+
+      {/* 列表 */}
+      <GroupLabel>兑换码列表（{REDEEM_TYPE_LABELS[type]}）</GroupLabel>
+      <div className="card-group mt-1">
+        <div className="p-3">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && void load(type)}
+            placeholder="搜索兑换码…"
+            className="ios-input"
+          />
+        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Spinner size={26} />
+          </div>
+        ) : list.length === 0 ? (
+          <EmptyState iconName="ticket" title="暂无兑换码" />
+        ) : (
+          <ul>
+            {list.map((row) => {
+              const result = typeof row.result === "string" ? safeParseJson(row.result) : row.result;
+              return (
+                <li key={row.id} className="card-row">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ background: row.redeemed ? "var(--fg-tertiary)" : "var(--green)" }}>
+                    <Icon name={row.redeemed ? "check-circle" : "ticket"} size={16} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold" style={{ color: "var(--fg)" }}>
+                      {row.code}
+                    </p>
+                    <p className="truncate text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                      {row.redeemed ? `已兑换 ${formatTime(row.redeemed_at || row.created_at)}` : `未兑换 · 过期 ${formatTime(row.expires_at)}`}
+                      {result?.address ? ` · ${result.address}` : result?.user_email ? ` · ${result.user_email}` : ""}
+                    </p>
+                  </div>
+                  <span
+                    className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    style={{
+                      background: row.redeemed ? "var(--fill)" : row.enabled ? "rgba(52,199,89,0.15)" : "var(--fill)",
+                      color: row.redeemed ? "var(--fg-secondary)" : row.enabled ? "var(--green)" : "var(--fg-tertiary)",
+                    }}
+                  >
+                    {row.redeemed ? "已用" : row.enabled ? "可用" : "禁用"}
+                  </span>
+                  <button
+                    onClick={() => void remove(row.id)}
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                    style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                    title="删除"
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
+
+function safeParseJson(s: string): any | null {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
 }
 
 /* ---------- 清理设置 ---------- */

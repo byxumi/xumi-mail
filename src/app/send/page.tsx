@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
+import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings } from "@/hooks/useSettings";
 import { api, formatTime } from "@/lib/client";
@@ -96,7 +97,9 @@ export default function SendPage() {
       <div className="min-h-screen">
         <Header />
         <div className="mx-auto max-w-md px-4 py-20 text-center" style={{ color: "var(--fg-secondary)" }}>
-          <div className="text-5xl">📤</div>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl" style={{ background: "var(--fill)" }}>
+            <Icon name="send" size={28} />
+          </div>
           <p className="mt-4 text-[16px]">请先创建邮箱地址后再发件</p>
         </div>
       </div>
@@ -108,7 +111,9 @@ export default function SendPage() {
       <div className="min-h-screen">
         <Header />
         <div className="mx-auto max-w-md px-4 py-20 text-center" style={{ color: "var(--fg-secondary)" }}>
-          <div className="text-5xl">🚫</div>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl" style={{ background: "var(--fill)" }}>
+            <Icon name="ban" size={28} />
+          </div>
           <p className="mt-4 text-[16px]">管理员未启用发件功能（需配置 Resend / SMTP / SEND_MAIL）</p>
         </div>
       </div>
@@ -210,8 +215,9 @@ export default function SendPage() {
             </span>
           </div>
 
-          <LoadingButton loading={sending} onClick={send} className="btn-primary mt-5 w-full">
-            📤 发送
+          <LoadingButton loading={sending} onClick={send} className="btn-primary mt-5 flex w-full items-center justify-center gap-2">
+            <Icon name="send" size={18} strokeWidth={2.2} />
+            发送
           </LoadingButton>
         </div>
 
@@ -221,7 +227,7 @@ export default function SendPage() {
         </h2>
         {sentList.length === 0 ? (
           <div className="card-group">
-            <EmptyState icon="📤" title="暂无已发送邮件" />
+            <EmptyState iconName="send" title="暂无已发送邮件" />
           </div>
         ) : (
           <div className="card-group">

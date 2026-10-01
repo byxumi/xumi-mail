@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useToast } from "./Toast";
+import { Icon } from "./Icon";
 
 /** 复制到剪贴板 */
 export function useCopy() {
@@ -39,15 +40,19 @@ export function LoadingButton({
 export function EmptyState({
   title,
   description,
-  icon = "📭",
+  icon,
+  iconName = "inbox",
 }: {
   title: string;
   description?: string;
   icon?: string;
+  iconName?: string;
 }) {
   return (
     <div className="empty-state">
-      <div className="icon">{icon}</div>
+      <div className="icon">
+        {iconName ? <Icon name={iconName as any} size={56} strokeWidth={1.5} /> : icon}
+      </div>
       <p className="text-[17px] font-semibold" style={{ color: "var(--fg-secondary)" }}>
         {title}
       </p>
@@ -119,6 +124,7 @@ export function GroupLabel({ children }: { children: React.ReactNode }) {
 /** iOS 表单行（图标 + 标题 + 值 + 箭头） */
 export function FormRow({
   icon,
+  iconName,
   label,
   value,
   href,
@@ -127,6 +133,7 @@ export function FormRow({
   children,
 }: {
   icon?: string;
+  iconName?: string;
   label: string;
   value?: string;
   href?: string;
@@ -136,12 +143,12 @@ export function FormRow({
 }) {
   const inner = (
     <>
-      {icon && (
+      {(icon || iconName) && (
         <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[14px]"
-          style={{ background: "var(--fill)" }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: "var(--fill)", color: "var(--accent)" }}
         >
-          {icon}
+          {iconName ? <Icon name={iconName as any} size={15} /> : icon}
         </span>
       )}
       <span className="flex-1 text-[16px]" style={{ color: danger ? "var(--red)" : "var(--fg)" }}>
@@ -154,7 +161,9 @@ export function FormRow({
       )}
       {children}
       {(href || onClick) && (
-        <span style={{ color: "var(--fg-tertiary)" }}>›</span>
+        <span style={{ color: "var(--fg-tertiary)" }}>
+          <Icon name="chevron-right" size={16} />
+        </span>
       )}
     </>
   );
@@ -332,7 +341,9 @@ export function SearchInput({
 }) {
   return (
     <div className="search-box">
-      <span style={{ color: "var(--fg-tertiary)" }}>🔍</span>
+      <span style={{ color: "var(--fg-tertiary)" }}>
+        <Icon name="search" size={15} />
+      </span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -342,11 +353,11 @@ export function SearchInput({
       {value && (
         <button
           onClick={() => onChange("")}
-          className="pressable flex h-5 w-5 items-center justify-center rounded-full text-[11px] text-white"
+          className="pressable flex h-5 w-5 items-center justify-center rounded-full text-white"
           style={{ background: "var(--fg-tertiary)" }}
           aria-label="清除"
         >
-          ✕
+          <Icon name="x" size={11} strokeWidth={2.5} />
         </button>
       )}
     </div>
