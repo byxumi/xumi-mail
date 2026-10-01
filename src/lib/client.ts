@@ -84,15 +84,27 @@ const USER_TOKEN_KEY = "tm_user_jwt";
 const ADMIN_TOKEN_KEY = "tm_admin_auth";
 
 export const tokenStore = {
-  getAddress: () => localStorage.getItem(ADDRESS_TOKEN_KEY) || "",
-  setAddress: (t: string) => localStorage.setItem(ADDRESS_TOKEN_KEY, t),
-  clearAddress: () => localStorage.removeItem(ADDRESS_TOKEN_KEY),
-  getUser: () => localStorage.getItem(USER_TOKEN_KEY) || "",
-  setUser: (t: string) => localStorage.setItem(USER_TOKEN_KEY, t),
-  clearUser: () => localStorage.removeItem(USER_TOKEN_KEY),
-  getAdmin: () => localStorage.getItem(ADMIN_TOKEN_KEY) || "",
-  setAdmin: (t: string) => localStorage.setItem(ADMIN_TOKEN_KEY, t),
-  clearAdmin: () => localStorage.removeItem(ADMIN_TOKEN_KEY),
+  getAddress: () => (typeof window !== "undefined" ? localStorage.getItem(ADDRESS_TOKEN_KEY) : "") || "",
+  setAddress: (t: string) => {
+    if (typeof window !== "undefined") localStorage.setItem(ADDRESS_TOKEN_KEY, t);
+  },
+  clearAddress: () => {
+    if (typeof window !== "undefined") localStorage.removeItem(ADDRESS_TOKEN_KEY);
+  },
+  getUser: () => (typeof window !== "undefined" ? localStorage.getItem(USER_TOKEN_KEY) : "") || "",
+  setUser: (t: string) => {
+    if (typeof window !== "undefined") localStorage.setItem(USER_TOKEN_KEY, t);
+  },
+  clearUser: () => {
+    if (typeof window !== "undefined") localStorage.removeItem(USER_TOKEN_KEY);
+  },
+  getAdmin: () => (typeof window !== "undefined" ? localStorage.getItem(ADMIN_TOKEN_KEY) : "") || "",
+  setAdmin: (t: string) => {
+    if (typeof window !== "undefined") localStorage.setItem(ADMIN_TOKEN_KEY, t);
+  },
+  clearAdmin: () => {
+    if (typeof window !== "undefined") localStorage.removeItem(ADMIN_TOKEN_KEY);
+  },
 };
 
 async function request<T = any>(
