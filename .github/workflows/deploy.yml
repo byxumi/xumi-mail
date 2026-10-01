@@ -51,7 +51,8 @@ jobs:
 
       - name: Build Worker (OpenNext)
         timeout-minutes: 10
-        run: npx opennextjs-cloudflare build
+        # 先执行 patch 脚本注入 cloudflare: external 插件，再进行 OpenNext 构建
+        run: npm run build:worker
         env:
           CI: true
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
