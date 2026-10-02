@@ -126,6 +126,25 @@ export default function AccountPage() {
     }
   };
 
+  const testWebhook = async () => {
+    if (!whUrl.trim()) {
+      push("info", "请先填写 Webhook URL");
+      return;
+    }
+    try {
+      await api.webhookTest({
+        enabled: whEnabled,
+        url: whUrl,
+        method: whMethod,
+        headers: whHeaders,
+        body: whBody || "mail received: ${subject}",
+      });
+      push("success", "测试消息已发送");
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  };
+
   const changePassword = async () => {
     if (!newPwd) {
       push("error", "请填写新密码");
@@ -429,9 +448,14 @@ export default function AccountPage() {
                     className="mt-3 w-full resize-none rounded-xl p-3 text-[13px] font-mono outline-none focus:ring-2 focus:ring-[#00a876]/30"
                     style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
                   />
-                  <button onClick={saveWebhook} className="btn-primary mt-3 w-full">
-                    保存 Webhook
-                  </button>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={saveWebhook} className="btn-primary flex-1">
+                      保存 Webhook
+                    </button>
+                    <button onClick={testWebhook} className="btn-secondary flex-1">
+                      发送测试
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

@@ -220,6 +220,8 @@ export const api = {
   saveAutoReply: (body: any) =>
     request<{ success: boolean }>("/api/auto_reply", { method: "POST", body, auth: "address" }),
   webhookSettings: () => request<any>("/api/webhook/settings", { auth: "address" }),
+  webhookTest: (settings: Record<string, unknown>) =>
+    request<{ success: boolean }>("/api/webhook/test", { method: "POST", body: settings, auth: "address" }),
   saveWebhookSettings: (body: any) =>
     request<{ success: boolean }>("/api/webhook/settings", { method: "POST", body, auth: "address" }),
 
