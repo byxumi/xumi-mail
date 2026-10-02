@@ -76,7 +76,7 @@ export default function MailPage() {
     if (!token) return;
     try {
       setLoading(true);
-      const res = await api.parsedMails({ limit: 100, offset: 0 });
+      const res = await api.parsedMails({ limit: 100, offset: (pageRef.current - 1) * 100 });
       setInbox(res.results);
       setCount(res.count);
       if (res.results[0]?.address) setMyAddress(res.results[0].address);
@@ -197,6 +197,10 @@ export default function MailPage() {
 
   // 每 15 秒自动刷新（可关）
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const totalPages = Math.max(1, Math.ceil(count / 100));
   useInterval(() => {
     if (!autoRefresh) return;
     if (tab === "inbox") void loadMails();
@@ -677,6 +681,33 @@ export default function MailPage() {
                 <Icon name={loading ? "loader" : "refresh"} size={15} />
                 刷新
               </button>
+            )}
+            {tab === "inbox" && count > 100 && (
+              <span className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px]" style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}>
+                <button
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1));
+                    setSelectedId(null);
+                  }}
+                  disabled={page <= 1}
+                  className="pressable rounded-full px-1.5 disabled:opacity-30"
+                  title="上一页"
+                >
+                  <Icon name="chevron-left" size={14} />
+                </button>
+                <span className="min-w-[3.5em] text-center">第 {page}/{totalPages} 页</span>
+                <button
+                  onClick={() => {
+                    setPage((p) => Math.min(totalPages, p + 1));
+                    setSelectedId(null);
+                  }}
+                  disabled={page >= totalPages}
+                  className="pressable rounded-full px-1.5 disabled:opacity-30"
+                  title="下一页"
+                >
+                  <Icon name="chevron-right" size={14} />
+                </button>
+              </span>
             )}
             {tab === "inbox" && unreadCount > 0 && !multiSelect && (
               <button
