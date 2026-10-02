@@ -116,6 +116,61 @@ export default function MailPage() {
     }
   }, [token, setToken, push]);
 
+  const setMailRead = async (id: number, isUnread: boolean) => {
+    setInbox((prev) => prev.map((m) => (m.id === id ? { ...m, is_unread: isUnread ? 1 : 0 } : m)));
+    try {
+      await api.markRead(id, isUnread);
+    } catch (e) {
+      push("error", (e as Error).message);
+      await loadMails();
+    }
+  };
+  // URL ?mailId= 直达指定邮件（外部直链 / 邮件内跳转）
+  const mailIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get("mailId");
+    if (raw && !Number.isNaN(Number(raw))) {
+      mailIdRef.current = Number(raw);
+      // 先清理 URL 参数（待选中后再清，避免刷新重触发）
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mailId");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
+
+  // 列表加载后选中直达邮件
+  useEffect(() => {
+    if (mailIdRef.current && inbox.length > 0) {
+      const target = inbox.find((m) => m.id === mailIdRef.current);
+      if (target) {
+        setSelectedId(target.id);
+        setMobileDetailOpen(true);
+        void setMailRead(target.id, false);
+        mailIdRef.current = null;
+      } else if (!loading) {
+        // 列表里没有（可能已删除/不在前 100），尝试直接拉取
+        api
+          .parsedMail(mailIdRef.current)
+          .then((row) => {
+            if (row) {
+              setInbox((prev) =>
+                prev.some((m) => m.id === row.id) ? prev : [row, ...prev]
+              );
+              setSelectedId(row.id);
+              setMobileDetailOpen(true);
+              void setMailRead(row.id, false);
+            }
+            mailIdRef.current = null;
+          })
+          .catch(() => {
+            mailIdRef.current = null;
+          });
+      }
+    }
+  }, [inbox, loading, setMailRead]);
+
   // token 就绪后加载
   useEffect(() => {
     if (token) {
@@ -132,6 +187,7 @@ export default function MailPage() {
       setMyAddress("");
     }
   }, [token, loadMails, loadSent]);
+
 
   // 每 15 秒自动刷新
   useInterval(() => {
@@ -189,15 +245,6 @@ export default function MailPage() {
   };
 
   /** 标记已读 / 未读（乐观更新） */
-  const setMailRead = async (id: number, isUnread: boolean) => {
-    setInbox((prev) => prev.map((m) => (m.id === id ? { ...m, is_unread: isUnread ? 1 : 0 } : m)));
-    try {
-      await api.markRead(id, isUnread);
-    } catch (e) {
-      push("error", (e as Error).message);
-      await loadMails();
-    }
-  };
 
   /** 全部标为已读 */
   const markAllRead = async () => {
