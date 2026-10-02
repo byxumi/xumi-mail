@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tokenStore } from "@/lib/client";
 import { useTheme } from "@/hooks/useTheme";
-import { useSettings } from "@/hooks/useSettings";
 import { Icon } from "@/components/Icon";
 import { useEffect, useRef, useState } from "react";
 
@@ -13,7 +12,6 @@ export default function Header() {
   const pathname = usePathname();
   const hasAddress = typeof window !== "undefined" && !!tokenStore.getAddress();
   const { colorScheme, toggleTheme } = useTheme();
-  const { settings } = useSettings();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -75,12 +73,8 @@ export default function Header() {
     { href: "/account", label: "账号", icon: "settings" as const, badge: 0 },
   ];
 
-  // 次级入口：兑换码藏进「更多」；管理后台不提供入口（手动访问 /admin）
-  const moreItems = [
-    ...(settings?.enableRedeemCode
-      ? [{ href: "/redeem", label: "兑换", icon: "ticket" as const }]
-      : []),
-  ];
+  // 次级入口：兑换藏进「更多」，常驻稳定（不依赖异步 settings，避免闪烁）；管理后台不提供入口（手动访问 /admin）
+  const moreItems = [{ href: "/redeem", label: "兑换", icon: "ticket" as const }];
 
   return (
     <header className={`glass-bar sticky top-0 z-30 ${scrolled ? "scrolled" : ""}`}>
