@@ -717,22 +717,24 @@ export default function MailPage() {
                 <Icon name="file-down" size={15} />
                 打包下载
               </button>
-              <button
-                onClick={() => {
-                  if (selectedIds.length === 0) {
-                    push("info", "请先勾选邮件");
-                    return;
-                  }
-                  setConfirmAction({ type: "multi-delete" });
-                }}
-                disabled={selectedIds.length === 0}
-                className="pressable flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-40"
-                style={{ background: "rgba(255,59,48,0.12)", color: "#ff3b30" }}
-                title="批量删除选中邮件"
-              >
-                <Icon name="trash" size={14} />
-                删除
-              </button>
+              {settings?.enableUserDeleteEmail !== false && (
+                <button
+                  onClick={() => {
+                    if (selectedIds.length === 0) {
+                      push("info", "请先勾选邮件");
+                      return;
+                    }
+                    setConfirmAction({ type: "multi-delete" });
+                  }}
+                  disabled={selectedIds.length === 0}
+                  className="pressable flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-40"
+                  style={{ background: "rgba(255,59,48,0.12)", color: "#ff3b30" }}
+                  title="批量删除选中邮件"
+                >
+                  <Icon name="trash" size={14} />
+                  删除
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -808,7 +810,7 @@ export default function MailPage() {
             onForward={(mail) => openDraft("forward", mail)}
           />
         ) : (
-          <SentView sent={sent} onDelete={(id) => setConfirmAction({ type: "delete-sent", id })} />
+          <SentView sent={sent} onDelete={settings?.enableUserDeleteEmail !== false ? (id) => setConfirmAction({ type: "delete-sent", id }) : undefined} />
         )}
       </main>
 
@@ -1416,14 +1418,16 @@ function MailDetail({
             >
               <Icon name="file-down" size={15} />
             </button>
-            <button
-              onClick={onDelete}
-              className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-              style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
-              title="删除"
-            >
-              <Icon name="trash" size={16} />
-            </button>
+            {settings?.enableUserDeleteEmail !== false && (
+              <button
+                onClick={onDelete}
+                className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                title="删除"
+              >
+                <Icon name="trash" size={16} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -1615,7 +1619,7 @@ function MailDetail({
   return content;
 }
 
-function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => void }) {
+function SentView({ sent, onDelete }: { sent: any[]; onDelete?: (id: number) => void }) {
   if (sent.length === 0) {
     return (
       <div className="card-group mt-4">
@@ -1652,14 +1656,16 @@ function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => v
               <span className="shrink-0 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
                 {formatTime(item.created_at)}
               </span>
-              <button
-                onClick={() => onDelete(item.id)}
-                className="pressable flex h-8 w-8 items-center justify-center rounded-full"
-                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
-                title="删除"
-              >
-                <Icon name="trash" size={15} />
-              </button>
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(item.id)}
+                  className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                  style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                  title="删除"
+                >
+                  <Icon name="trash" size={15} />
+                </button>
+              )}
             </li>
           );
         })}
