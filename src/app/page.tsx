@@ -54,25 +54,40 @@ export default function HomePage() {
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           style={{
             background:
-              "radial-gradient(closest-side, rgba(10,132,255,0.28), rgba(94,92,230,0.2), transparent)",
+              "radial-gradient(closest-side, rgba(0,224,138,0.26), rgba(0,168,118,0.16), transparent)",
           }}
         />
 
         <div className="relative mx-auto max-w-3xl">
           <LogoPop>
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-2xl shadow-blue-500/40">
-              <Mail size={48} strokeWidth={1.6} />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-512.png"
+              alt="深夜信号站"
+              width={96}
+              height={96}
+              className="mx-auto h-24 w-24 rounded-[28px] object-cover shadow-[0_20px_60px_rgba(0,168,118,0.30)]"
+            />
           </LogoPop>
 
+          <motion.p
+            className="mono mt-8 text-[12px] font-semibold tracking-[0.18em]"
+            style={{ color: "var(--accent)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springSoft, delay: 0.08 }}
+          >
+            XUMI MAIL · NIGHT SIGNAL STATION
+          </motion.p>
+
           <motion.h1
-            className="large-title mt-8"
+            className="large-title mt-2"
             style={{ color: "var(--fg)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springSoft, delay: 0.12 }}
           >
-            Xumi Mail
+            深夜信号站
           </motion.h1>
 
           <motion.p
@@ -97,7 +112,7 @@ export default function HomePage() {
               <Link
                 href="/mail"
                 className="btn-primary w-64 text-center text-[17px]"
-                style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
+                style={{ boxShadow: "0 10px 30px rgba(0,168,118,0.35)" }}
               >
                 立即创建邮箱
               </Link>
@@ -216,12 +231,12 @@ export default function HomePage() {
             whileHover={{ scale: 1.01 }}
             transition={springSoft}
             style={{
-              background: "linear-gradient(135deg, rgba(10,132,255,0.12), rgba(94,92,230,0.14))",
+              background: "linear-gradient(135deg, rgba(0,224,138,0.10), rgba(0,168,118,0.14))",
               border: "0.5px solid var(--separator)",
             }}
           >
             <h2 className="text-[24px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
-              现在就开始保护你的隐私
+              深夜信号已就绪
             </h2>
             <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
               无需注册，10 秒内创建你的第一个临时邮箱地址
@@ -230,7 +245,7 @@ export default function HomePage() {
               <Link
                 href="/mail"
                 className="btn-primary mt-6 inline-block min-w-[220px] text-center"
-                style={{ boxShadow: "0 10px 30px rgba(0,122,255,0.35)" }}
+                style={{ boxShadow: "0 10px 30px rgba(0,168,118,0.35)" }}
               >
                 免费创建临时邮箱
               </Link>
@@ -244,7 +259,7 @@ export default function HomePage() {
         className="border-t pb-8 pt-6 text-center text-[13px]"
         style={{ borderColor: "var(--separator)", color: "var(--fg-tertiary)" }}
       >
-        Xumi Mail · 基于 Cloudflare Workers 构建 · 免费使用
+        <span className="mono tracking-[0.08em]">XUMI MAIL</span> · 深夜信号站 · 基于 Cloudflare Workers 构建
       </footer>
     </main>
   );

@@ -25,15 +25,6 @@ jobs:
         env:
           CI: true
 
-      - name: Build Vue3 frontend (web)
-        working-directory: web
-        run: |
-          corepack enable
-          pnpm install --frozen-lockfile
-          pnpm run build
-        env:
-          CI: true
-
       - name: Type check
         run: npm run typecheck
         env:

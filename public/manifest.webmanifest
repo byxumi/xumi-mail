@@ -1,0 +1,21 @@
+{
+  "name": "深夜信号站 · Xumi Mail",
+  "short_name": "深夜信号站",
+  "description": "免费临时邮箱服务，收信即焚，隐私安全",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f0d",
+  "theme_color": "#00a876",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ Outputs: logo-512.png, logo-192.png, logo-32.png, favicon.ico (32px png inside i
 """
 import math, struct, zlib, os
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web', 'public')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public')
 
 def rounded_rect_sdf(px, py, cx, cy, hw, hh, r):
     qx = abs(px - cx) - (hw - r)

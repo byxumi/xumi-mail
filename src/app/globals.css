@@ -1,44 +1,104 @@
 @import "tailwindcss";
 
-/* ============ Apple Design System ============ */
-:root {
-  /* iOS 系统色 */
-  --accent: #007aff;
-  --green: #34c759;
-  --red: #ff3b30;
-  --orange: #ff9500;
-  --yellow: #ffcc00;
-  --teal: #5ac8fa;
-  --indigo: #5856d6;
-  --purple: #af52de;
-  --pink: #ff2d55;
+/* ============ 深夜信号站 · 设计系统 ============
+   暗色科技 + 磷光绿 · NIGHT SIGNAL STATION
+   字体：Space Grotesk（UI）+ JetBrains Mono（数据/代码）自托管 */
 
-  /* 背景与文字（浅色） */
-  --bg: #f2f2f7;
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fonts/SpaceGrotesk-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fonts/SpaceGrotesk-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fonts/SpaceGrotesk-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fonts/SpaceGrotesk-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* 品牌色（磷光绿） */
+  --accent: #00a876;
+  --green: #00a876;
+  --red: #e5484d;
+  --orange: #ff9f0a;
+  --yellow: #f5d90a;
+  --teal: #00c2a8;
+  --indigo: #5e5ce6;
+  --purple: #af52de;
+  --pink: #ff375f;
+
+  /* 背景与文字（浅色 · 冷调纸灰绿） */
+  --bg: #f4f6f5;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e5e5ea;
-  --fg: #1c1c1e;
-  --fg-secondary: #6b7280;
-  --fg-tertiary: #a1a1aa;
-  --separator: rgba(60, 60, 67, 0.12);
-  --fill: rgba(120, 120, 128, 0.12);
+  --bg-tertiary: #e8edeb;
+  --fg: #16211c;
+  --fg-secondary: #5a6b62;
+  --fg-tertiary: #9aa8a0;
+  --separator: rgba(22, 45, 36, 0.12);
+  --fill: rgba(22, 45, 36, 0.08);
 
   /* 毛玻璃 */
   --glass: rgba(255, 255, 255, 0.72);
-  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-strong: rgba(255, 255, 255, 0.86);
 
-  /* 圆角（iOS 风格层次） */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  /* 圆角（品牌更利落） */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
 
-  /* 阴影层级（iOS 风格柔和阴影） */
-  --shadow-sm: 0 1px 0 rgba(60, 60, 67, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14), 0 3px 8px rgba(0, 0, 0, 0.06);
+  /* 阴影层级（偏投影、低饱和） */
+  --shadow-sm: 0 1px 0 rgba(22, 45, 36, 0.05), 0 1px 3px rgba(22, 45, 36, 0.07);
+  --shadow-md: 0 2px 10px rgba(22, 45, 36, 0.1), 0 1px 2px rgba(22, 45, 36, 0.05);
+  --shadow-lg: 0 16px 40px rgba(8, 20, 15, 0.22), 0 4px 10px rgba(8, 20, 15, 0.08);
 
-  /* 动效曲线（iOS spring） */
+  /* 动效曲线 */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --dur-fast: 0.15s;
@@ -47,16 +107,16 @@
 }
 
 [data-theme="dark"] {
-  --bg: #000000;
-  --bg-secondary: #1c1c1e;
-  --bg-tertiary: #2c2c2e;
-  --fg: #f2f2f7;
-  --fg-secondary: #98989e;
-  --fg-tertiary: #6b6b70;
-  --separator: rgba(84, 84, 88, 0.4);
-  --fill: rgba(120, 120, 128, 0.24);
-  --glass: rgba(28, 28, 30, 0.72);
-  --glass-strong: rgba(28, 28, 30, 0.88);
+  --bg: #0b0f0d;
+  --bg-secondary: #121816;
+  --bg-tertiary: #1a211d;
+  --fg: #e6f1eb;
+  --fg-secondary: #8fa29a;
+  --fg-tertiary: #5d6d65;
+  --separator: rgba(230, 241, 235, 0.12);
+  --fill: rgba(230, 241, 235, 0.09);
+  --glass: rgba(11, 15, 13, 0.72);
+  --glass-strong: rgba(11, 15, 13, 0.88);
 }
 
 /* iOS 安全区适配（刘海屏） */
@@ -75,13 +135,20 @@ html,
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+  font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans SC", sans-serif;
+    "Noto Sans SC", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* 数据 / 代码字体 */
+.mono,
+.xumi-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 * {
@@ -104,26 +171,31 @@ textarea {
   font-family: inherit;
 }
 
-/* 隐藏滚动条但可滚动（iOS 风） */
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 隐藏滚动条但可滚动 */
 ::-webkit-scrollbar {
   width: 0px;
   height: 0px;
 }
 
 /* ============ 组件基元 ============ */
-/* iOS 毛玻璃导航栏 */
+/* 毛玻璃导航栏 */
 .glass-bar {
   background: var(--glass);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
 }
 .glass-bar.scrolled {
   background: var(--glass-strong);
   box-shadow: 0 1px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* 大标题（iOS Large Title） */
+/* 大标题 */
 .large-title {
   font-size: 34px;
   font-weight: 700;
@@ -131,9 +203,10 @@ textarea {
   line-height: 1.2;
 }
 
-/* 分组卡片（iOS Inset Grouped Card） */
+/* 分组卡片 */
 .card-group {
   background: var(--bg-secondary);
+  border: 1px solid var(--separator);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -148,10 +221,10 @@ textarea {
   transition: background 0.12s ease;
 }
 .card-row + .card-row {
-  border-top: 0.5px solid var(--separator);
+  border-top: 1px solid var(--separator);
 }
 .card-row.active {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(0, 168, 118, 0.1);
 }
 .card-row:hover {
   background: var(--bg-tertiary);
@@ -160,7 +233,7 @@ textarea {
   background: var(--fill);
 }
 
-/* iOS 分段控件 */
+/* 分段控件 */
 .segmented {
   display: inline-flex;
   padding: 3px;
@@ -184,12 +257,12 @@ textarea {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
-/* iOS 主按钮 */
+/* 主按钮 */
 .btn-primary {
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 14px 20px;
   font-size: 17px;
   font-weight: 600;
@@ -199,12 +272,12 @@ textarea {
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.4; }
 
-/* iOS 次要按钮 */
+/* 次要按钮 */
 .btn-secondary {
   background: var(--fill);
   color: var(--accent);
-  border: none;
-  border-radius: 14px;
+  border: 1px solid var(--separator);
+  border-radius: 12px;
   padding: 12px 18px;
   font-size: 16px;
   font-weight: 500;
@@ -212,26 +285,27 @@ textarea {
 }
 .btn-secondary:hover { opacity: 0.8; }
 
-/* iOS 输入框 */
+/* 输入框 */
 .ios-input {
   width: 100%;
   background: var(--bg-tertiary);
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--r-sm);
   padding: 12px 14px;
   font-size: 17px;
   color: var(--fg);
   outline: none;
-  transition: box-shadow 0.15s ease, background 0.15s ease;
+  transition: box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .ios-input:hover { background: var(--fill); }
 .ios-input:focus {
   background: var(--bg-secondary);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 168, 118, 0.2);
 }
 .ios-input::placeholder { color: var(--fg-tertiary); }
 
-/* iOS Switch */
+/* Switch */
 .ios-switch {
   position: relative;
   width: 51px;
@@ -275,7 +349,7 @@ textarea {
 
 /* 验证码高亮大卡片 */
 .code-hero {
-  background: linear-gradient(135deg, #0a84ff 0%, #0060df 100%);
+  background: linear-gradient(135deg, #00c08c 0%, #007a58 100%);
   color: #fff;
   border-radius: var(--r-lg);
   padding: 20px 24px;
@@ -283,7 +357,7 @@ textarea {
   font-size: 32px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 12px 30px rgba(0, 122, 255, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 168, 118, 0.35);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -332,7 +406,7 @@ textarea {
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 168, 118, 0.4);
   transition: transform 0.15s var(--ease-spring), opacity 0.15s ease, box-shadow 0.2s ease;
   z-index: 30;
   border: none;
@@ -378,7 +452,7 @@ textarea {
   background: var(--bg-tertiary);
   padding: 12px;
   border-radius: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
 }
 
@@ -400,9 +474,38 @@ textarea {
   opacity: 0.85;
 }
 
-/* ============ 新增 iOS 组件 ============ */
+/* ============ 深夜信号站新增组件 ============ */
 
-/* 底部抽屉（iOS Sheet） */
+/* 状态胶囊（NIGHT / DAY 信号灯） */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--fill);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 2px var(--accent);
+  animation: signal-pulse 2.4s ease-in-out infinite;
+}
+@keyframes signal-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* 底部抽屉 */
 .sheet-mask {
   position: fixed;
   inset: 0;
@@ -422,6 +525,7 @@ textarea {
   width: 100%;
   max-width: 520px;
   background: var(--bg-secondary);
+  border: 1px solid var(--separator);
   border-radius: 24px 24px 0 0;
   box-shadow: var(--shadow-lg);
   animation: sheet-up 0.35s var(--ease-spring);
@@ -472,7 +576,7 @@ textarea {
   position: absolute;
   inset: -2px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(255,255,255,0.35), transparent 40%, transparent 100%);
+  background: conic-gradient(from 0deg, rgba(0, 224, 138, 0.5), transparent 40%, transparent 100%);
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;
@@ -492,7 +596,7 @@ textarea {
 }
 .search-box:focus-within {
   background: var(--bg-secondary);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.22);
+  box-shadow: 0 0 0 3px rgba(0, 168, 118, 0.2);
 }
 .search-box input {
   flex: 1;
@@ -510,8 +614,8 @@ textarea {
   justify-content: space-between;
   gap: 8px;
   background: var(--bg-secondary);
-  border: 0.5px solid var(--separator);
-  border-radius: 16px;
+  border: 1px solid var(--separator);
+  border-radius: 14px;
   padding: 12px 16px;
   box-shadow: var(--shadow-sm);
   transition: transform 0.12s ease, box-shadow 0.2s ease;

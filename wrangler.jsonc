@@ -6,10 +6,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "keep_vars": true,
   "assets": {
-    "directory": "web/dist",
+    "directory": ".open-next/assets",
     "binding": "ASSETS",
-    "run_worker_first": true,
-    "not_found_handling": "single-page-application"
+    "run_worker_first": true
   },
   "triggers": {
     "crons": ["0 * * * *"]

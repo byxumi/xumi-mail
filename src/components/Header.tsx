@@ -64,15 +64,24 @@ export default function Header() {
   return (
     <header className={`glass-bar sticky top-0 z-30 ${scrolled ? "scrolled" : ""}`}>
       <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-sm">
-              <Icon name="mail" size={15} strokeWidth={2.2} />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-192.png"
+              alt="深夜信号站"
+              className="h-7 w-7 rounded-[9px] object-cover"
+              width={28}
+              height={28}
+            />
             <span className="text-[17px] font-semibold tracking-tight" style={{ color: "var(--fg)" }}>
-              Xumi Mail
+              深夜信号站
             </span>
           </Link>
+          <span className="status-pill hidden sm:inline-flex">
+            <span className="status-dot" />
+            {colorScheme === "dark" ? "NIGHT" : "DAY"}
+          </span>
         </div>
 
         {/* 桌面端导航 */}

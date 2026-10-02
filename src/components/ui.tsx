@@ -201,7 +201,7 @@ export function Skeleton({ className = "", style }: { className?: string; style?
 }
 
 /** 头像（首字母 + 稳定配色） */
-const AVATAR_COLORS = ["#007aff", "#34c759", "#ff9500", "#af52de", "#ff2d55", "#5ac8fa", "#5856d6", "#ffcc00"];
+const AVATAR_COLORS = ["#00a876", "#34c759", "#ff9500", "#af52de", "#ff2d55", "#00c2a8", "#5e5ce6", "#f5d90a"];
 export function avatarColor(key: string): string {
   let h = 0;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;

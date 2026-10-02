@@ -11,42 +11,26 @@ import { CleanupSettings } from "./src/types";
 import { default as handler } from "./.open-next/worker.js";
 
 export default {
-  // 分流：上游前端 API 前缀（/api /open_api /user_api /admin /redeem_api /telegram）
-  // 重写映射到本后端路由体系，其余路径交给 ASSETS（web/dist，Vue3 前端 SPA）
+  // 分流：API 请求（/api/*）交给 OpenNext 生成的 fetch handler 处理，
+  // 其余路径（页面路由 / 静态资源）在 run_worker_first 下由 wrangler assets 先行接管，
+  // 未命中资源则回落到 OpenNext handler 渲染 Next 页面。
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // —— API 前缀重写（上游 Vue 前端 -> 本 Next.js 后端路由）——
-    let targetPath: string | null = null;
-    if (path.startsWith("/open_api/")) {
-      // /open_api/settings -> /api/open_api/settings
-      targetPath = "/api" + path;
-    } else if (path.startsWith("/user_api/")) {
-      // /user_api/login -> /api/user/login
-      targetPath = "/api/user" + path.slice("/user_api".length);
-    } else if (path.startsWith("/admin/")) {
-      // /admin/statistics -> /api/admin/statistics
-      targetPath = "/api/admin" + path.slice("/admin".length);
-    } else if (path.startsWith("/redeem_api/")) {
-      // /redeem_api/redeem -> /api/redeem (我们的兑换端点不含 /redeem 子路径)
-      const sub = path.slice("/redeem_api".length); // /redeem | /query | /result
-      targetPath = sub === "/redeem" ? "/api/redeem" : "/api/redeem" + sub;
-    } else if (path.startsWith("/telegram/")) {
-      // Telegram 绑定功能未移植：直接走 Next（将返回 404/未实现）
-      targetPath = "/api" + path;
-    } else if (path.startsWith("/api/")) {
-      targetPath = path;
+    // —— API 直通（Next.js 后端路由，无前缀重写）——
+    if (path.startsWith("/api/")) {
+      return handler.fetch(request, env, ctx);
     }
 
-    if (targetPath) {
-      const rewritten = new URL(targetPath + url.search, url.origin);
-      return handler.fetch(new Request(rewritten, request), env, ctx);
-    }
-
-    // —— 非 API：Vue3 前端静态资源（SPA history 路由 fallback 由 wrangler assets 处理）——
+    // —— 页面/静态资源：优先 ASSETS（.open-next/assets），未命中交给 Next 渲染 ——
     if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+      // run_worker_first 时资源请求会先被 asset-resolver 接管；
+      // 此处保留 ASSETS.fetch 用于 non-page 静态资源兼容
+      const res = await env.ASSETS.fetch(request);
+      if (res.status !== 404) {
+        return res;
+      }
     }
     return handler.fetch(request, env, ctx);
   },

@@ -194,7 +194,7 @@ export default function RedeemPage() {
                     type="checkbox"
                     checked={randomSub}
                     onChange={(e) => setRandomSub(e.target.checked)}
-                    className="accent-[#007aff]"
+                    className="accent-[#00a876]"
                   />
                   随机子域名
                 </label>
@@ -208,7 +208,7 @@ export default function RedeemPage() {
 
           {/* 结果 */}
           {result && resultMeta && (
-            <div className="mt-4 rounded-2xl p-4 fade-in" style={{ background: "rgba(52,199,89,0.1)", border: "0.5px solid rgba(52,199,89,0.3)" }}>
+            <div className="mt-4 rounded-2xl p-4 fade-in" style={{ background: "rgba(0,168,118,0.1)", border: "0.5px solid rgba(0,168,118,0.3)" }}>
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full text-white" style={{ background: "var(--green)" }}>
                   <Icon name={resultMeta.icon} size={18} />

@@ -199,7 +199,7 @@ export default function SendPage() {
               onChange={(e) => setContent(e.target.value)}
               rows={8}
               placeholder="邮件内容…"
-              className="w-full resize-none rounded-xl p-3 text-[16px] leading-relaxed outline-none focus:ring-2 focus:ring-[#007aff]/30"
+              className="w-full resize-none rounded-xl p-3 text-[16px] leading-relaxed outline-none focus:ring-2 focus:ring-[#00a876]/30"
               style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
             />
           </div>
@@ -210,7 +210,7 @@ export default function SendPage() {
                 type="checkbox"
                 checked={isHtml}
                 onChange={(e) => setIsHtml(e.target.checked)}
-                className="accent-[#007aff]"
+                className="accent-[#00a876]"
               />
               HTML 内容
             </label>

@@ -172,7 +172,7 @@ export default function AccountPage() {
         <FadeUp>
           <h1 className="large-title">账号</h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-            Xumi Mail 设置
+            深夜信号站设置
           </p>
         </FadeUp>
 
@@ -192,7 +192,7 @@ export default function AccountPage() {
                 </div>
                 <button
                   onClick={() => copy(address, "地址已复制")}
-                  className="pressable rounded-full bg-[#007aff] px-4 py-1.5 text-[13px] font-semibold text-white"
+                  className="pressable rounded-full bg-[#00a876] px-4 py-1.5 text-[13px] font-semibold text-white"
                 >
                   复制
                 </button>
@@ -412,7 +412,7 @@ export default function AccountPage() {
               />
             </div>
             <p className="mt-4 px-4 text-center text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
-              Xumi Mail v1.0 · 数据存储在 Cloudflare
+              深夜信号站 v1.0 · 数据存储在 Cloudflare
             </p>
           </>
         ) : (

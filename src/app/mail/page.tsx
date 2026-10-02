@@ -216,7 +216,7 @@ export default function MailPage() {
         <Header />
         <main className="mx-auto max-w-md px-4 pb-16 pt-12">
           <div className="text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#0a84ff] to-[#5e5ce6] text-white shadow-lg shadow-blue-500/30">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#00c08c] to-[#007a58] text-white shadow-lg shadow-emerald-500/30">
               <Icon name="mailbox" size={36} strokeWidth={1.7} />
             </div>
             <h1 className="large-title mt-6">创建临时邮箱</h1>
@@ -268,7 +268,7 @@ export default function MailPage() {
                     type="radio"
                     checked={nameMode === "auto"}
                     onChange={() => setNameMode("auto")}
-                    className="accent-[#007aff]"
+                    className="accent-[#00a876]"
                   />
                   随机前缀
                 </label>
@@ -279,7 +279,7 @@ export default function MailPage() {
                     type="radio"
                     checked={nameMode === "custom"}
                     onChange={() => setNameMode("custom")}
-                    className="accent-[#007aff]"
+                    className="accent-[#00a876]"
                   />
                   自定义
                 </label>
@@ -290,7 +290,7 @@ export default function MailPage() {
                     type="checkbox"
                     checked={randomSub}
                     onChange={(e) => setRandomSub(e.target.checked)}
-                    className="accent-[#007aff]"
+                    className="accent-[#00a876]"
                   />
                   随机子域名
                 </label>
@@ -715,7 +715,7 @@ function MailDetail({
                 onClick={() => onToggleRead(mail.id, mail.is_unread !== 1)}
                 className="pressable flex h-8 w-8 items-center justify-center rounded-full"
                 style={{
-                  background: mail.is_unread === 1 ? "rgba(0,122,255,0.15)" : "var(--fill)",
+                  background: mail.is_unread === 1 ? "rgba(0,168,118,0.16)" : "var(--fill)",
                   color: mail.is_unread === 1 ? "var(--accent)" : "var(--fg-tertiary)",
                 }}
                 title={mail.is_unread === 1 ? "标为已读" : "标为未读"}
@@ -828,7 +828,7 @@ function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => v
             <li key={item.id} className="card-row">
               <span
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
-                style={{ background: "linear-gradient(135deg,#34c759,#0a84ff)" }}
+                style={{ background: "linear-gradient(135deg,#00c08c,#007a58)" }}
               >
                 <Icon name="send" size={17} />
               </span>
@@ -911,7 +911,7 @@ function extractTextPreview(html: string): string {
 }
 
 function avatarColor(key: string): string {
-  const colors = ["#007aff", "#34c759", "#ff9500", "#af52de", "#ff2d55", "#5ac8fa", "#5856d6", "#ffcc00"];
+  const colors = ["#00a876", "#34c759", "#ff9500", "#af52de", "#ff2d55", "#00c2a8", "#5e5ce6", "#f5d90a"];
   let h = 0;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
   return colors[h % colors.length];

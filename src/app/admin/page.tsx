@@ -75,7 +75,7 @@ export default function AdminPage() {
       <div className="min-h-screen">
         <Header />
         <main className="mx-auto max-w-sm px-4 pb-16 pt-16 text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#5856d6] to-[#af52de] text-white shadow-lg shadow-purple-500/30">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-[#00c08c] to-[#007a58] text-white shadow-lg shadow-emerald-500/30">
             <Icon name="shield" size={38} strokeWidth={1.7} />
           </div>
           <h1 className="large-title mt-6">管理员</h1>
@@ -268,11 +268,11 @@ export default function AdminPage() {
 /* ---------- 统计 ---------- */
 function StatsView({ stats }: { stats: any }) {
   const items = [
-    { label: "地址数", value: stats.address, icon: "at-sign" as const, color: "#007aff" },
-    { label: "邮件总数", value: stats.mail, icon: "inbox" as const, color: "#34c759" },
-    { label: "今日邮件", value: stats.todayMail, icon: "flame" as const, color: "#ff9500" },
-    { label: "用户数", value: stats.user, icon: "users" as const, color: "#af52de" },
-    { label: "已发送", value: stats.sent, icon: "send" as const, color: "#5ac8fa" },
+    { label: "地址数", value: stats.addressCount, icon: "at-sign" as const, color: "#00a876" },
+    { label: "邮件总数", value: stats.mailCount, icon: "inbox" as const, color: "#34c759" },
+    { label: "7 日活跃地址", value: stats.activeAddressCount7days, icon: "flame" as const, color: "#ff9500" },
+    { label: "30 日活跃地址", value: stats.activeAddressCount30days, icon: "users" as const, color: "#af52de" },
+    { label: "已发送", value: stats.sendMailCount, icon: "send" as const, color: "#00c2a8" },
   ];
   return (
     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
