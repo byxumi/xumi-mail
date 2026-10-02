@@ -331,6 +331,19 @@ export const api = {
     request<{ success: boolean }>("/api/admin/auto_cleanup", { method: "PUT", body, auth: "admin" }),
   adminSendMail: (body: any) =>
     request<{ status: string }>("/api/admin/send_mail", { method: "POST", body, auth: "admin" }),
+  adminUnknowMails: (params: { limit?: number; offset?: number }) =>
+    request<any>(
+      `/api/admin/mails_unknow?limit=${params.limit ?? 50}&offset=${params.offset ?? 0}`,
+      { auth: "admin" }
+    ),
+  adminSendbox: (params: { limit?: number; offset?: number; address?: string }) =>
+    request<any>(
+      `/api/admin/sendbox?limit=${params.limit ?? 50}&offset=${params.offset ?? 0}${params.address ? `&address=${encodeURIComponent(params.address)}` : ""}`,
+      { auth: "admin" }
+    ),
+  adminDeleteSendbox: (id: number) =>
+    request<{ success: boolean }>(`/api/admin/sendbox?id=${id}`, { method: "DELETE", auth: "admin" }),
+  adminWorkerConfigs: () => request<any>("/api/admin/worker/configs", { auth: "admin" }),
   adminAiExtract: () => request<any>("/api/admin/ai_extract/settings", { auth: "admin" }),
   saveAdminAiExtract: (body: any) =>
     request<{ success: boolean }>("/api/admin/ai_extract/settings", {
@@ -358,7 +371,6 @@ export const api = {
     request<{ success: boolean }>("/api/admin/address_sender", { method: "POST", body, auth: "admin" }),
   /** 数据库版本/初始化状态 */
   adminDbVersion: () => request<any>("/api/admin/db_version", { auth: "admin" }),
-  /** 数据库初始化 */
   adminDbInitialize: () =>
     request<{ success: boolean }>("/api/admin/db_initialize", { method: "POST", auth: "admin" }),
   /** 数据库迁移 */
@@ -375,6 +387,60 @@ export const api = {
     request<{ success: boolean }>("/api/admin/config", {
       method: "POST",
       body: { key, value },
+      auth: "admin",
+    }),
+  /** 账户级设置（blockList/sendBlockList/verifiedAddressList/emailRuleSettings/...） */
+  adminAccountSettings: () => request<any>("/api/admin/account_settings", { auth: "admin" }),
+  saveAdminAccountSettings: (body: any) =>
+    request<{ success: boolean }>("/api/admin/account_settings", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  /** 用户设置（maxAddressCount/邮件校验/地址创建开关） */
+  adminUserSettings: () => request<any>("/api/admin/user_settings", { auth: "admin" }),
+  saveAdminUserSettings: (body: any) =>
+    request<{ success: boolean }>("/api/admin/user_settings", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  /** IP 黑名单设置 */
+  adminIpBlacklist: () => request<any>("/api/admin/ip_blacklist/settings", { auth: "admin" }),
+  saveAdminIpBlacklist: (body: any) =>
+    request<{ success: boolean }>("/api/admin/ip_blacklist/settings", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  /** Webhook 全局设置 */
+  adminWebhook: () => request<any>("/api/admin/webhook/settings", { auth: "admin" }),
+  saveAdminWebhook: (body: any) =>
+    request<{ success: boolean }>("/api/admin/webhook/settings", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  /** 邮件 Webhook 设置 */
+  adminMailWebhook: () => request<any>("/api/admin/mail_webhook/settings", { auth: "admin" }),
+  saveAdminMailWebhook: (body: any) =>
+    request<{ success: boolean }>("/api/admin/mail_webhook/settings", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  adminMailWebhookTest: (body: any) =>
+    request<{ success: boolean }>("/api/admin/mail_webhook/test", {
+      method: "POST",
+      body,
+      auth: "admin",
+    }),
+  /** 角色地址配额 */
+  adminRoleAddressConfig: () => request<any>("/api/admin/role_address_config", { auth: "admin" }),
+  saveAdminRoleAddressConfig: (body: any) =>
+    request<{ success: boolean }>("/api/admin/role_address_config", {
+      method: "POST",
+      body,
       auth: "admin",
     }),
 };

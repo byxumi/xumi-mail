@@ -42,3 +42,17 @@ export async function GET(req: NextRequest) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }
 }
+/** DELETE /api/admin/sendbox?id= —— 删除指定已发邮件（对齐上游 sendbox_api.remove） */
+export async function DELETE(req: NextRequest) {
+  try {
+    const env = await getEnv();
+    requireAdmin(env, req);
+    const { searchParams } = new URL(req.url);
+    const id = parseInt(searchParams.get("id") || "0") || 0;
+    if (!id) return text("缺少 id", 400);
+    const { success } = await env.DB.prepare(`DELETE FROM sendbox WHERE id = ?`).bind(id).run();
+    return json({ success });
+  } catch (e) {
+    return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
+  }
+}

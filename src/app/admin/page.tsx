@@ -15,9 +15,13 @@ import {
   WebhookView,
   MailWebhookView,
   RoleAddressConfigView,
+  UnknowMailsView,
+  SendBoxAdminView,
+  SendMailAdminView,
+  WorkerConfigView,
 } from "@/app/admin/views";
 
-type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "sender" | "settings" | "db";
+type Tab = "stats" | "mails" | "unknow" | "sent" | "sendmail" | "addresses" | "users" | "redeem" | "sender" | "settings" | "db" | "workercfg";
 
 export default function AdminPage() {
   const { push } = useToast();
@@ -130,11 +134,15 @@ export default function AdminPage() {
               options={[
                 { value: "stats", label: "统计" },
                 { value: "mails", label: "邮件" },
+                { value: "unknow", label: "未知邮件" },
+                { value: "sent", label: "已发送" },
+                { value: "sendmail", label: "发信" },
                 { value: "addresses", label: "地址" },
                 { value: "users", label: "用户" },
                 { value: "redeem", label: "兑换码" },
                 { value: "sender", label: "发信额度" },
                 { value: "db", label: "数据库" },
+                { value: "workercfg", label: "Worker 配置" },
                 { value: "settings", label: "清理" },
               ]}
             />
@@ -203,7 +211,11 @@ export default function AdminPage() {
         )}
         {tab === "redeem" && <RedeemAdminView />}
         {tab === "sender" && <SenderAccessView />}
+        {tab === "unknow" && <UnknowMailsView />}
+        {tab === "sent" && <SendBoxAdminView />}
+        {tab === "sendmail" && <SendMailAdminView />}
         {tab === "db" && <DatabaseView />}
+        {tab === "workercfg" && <WorkerConfigView />}
         {tab === "settings" && (
           <div>
             <Segmented
