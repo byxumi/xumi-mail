@@ -129,6 +129,7 @@ export default function MailPage() {
   };
   // URL ?mailId= 直达指定邮件（外部直链 / 邮件内跳转）
   const mailIdRef = useRef<number | null>(null);
+  const [mailIdInput, setMailIdInput] = useState("");
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -440,6 +441,37 @@ export default function MailPage() {
     router.push(`/send?${params.toString()}`);
   };
 
+  /** 按邮件 ID 直达（输入框查询） */
+  const queryMailById = () => {
+    const id = Number(mailIdInput.trim());
+    if (!mailIdInput.trim() || Number.isNaN(id) || id <= 0) {
+      push("info", "请输入有效的邮件 ID");
+      return;
+    }
+    setMailIdInput("");
+    const target = inbox.find((m) => m.id === id);
+    if (target) {
+      setSelectedId(target.id);
+      setMobileDetailOpen(true);
+      void setMailRead(id, false);
+      return;
+    }
+    // 列表里没有 → 尝试直接拉取
+    api
+      .parsedMail(id)
+      .then((row) => {
+        if (row) {
+          setInbox((prev) => (prev.some((m) => m.id === row.id) ? prev : [row, ...prev]));
+          setSelectedId(row.id);
+          setMobileDetailOpen(true);
+          void setMailRead(row.id, false);
+        } else {
+          push("info", "未找到该邮件");
+        }
+      })
+      .catch(() => push("error", "查询失败"));
+  };
+
   /** ---------- 上 / 下一封 ---------- */
   const visibleMails = tab === "inbox" ? searchFiltered : [];
   const currentIndex = visibleMails.findIndex((m) => m.id === selectedId);
@@ -711,8 +743,32 @@ export default function MailPage() {
         </div>
 
         {tab === "inbox" && (
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <SearchInput value={search} onChange={setSearch} placeholder="搜索发件人、主题、内容…" />
+            <div className="flex items-center gap-1.5">
+              <input
+                value={mailIdInput}
+                onChange={(e) => setMailIdInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && queryMailById()}
+                placeholder="邮件 ID"
+                inputMode="numeric"
+                className="w-28 rounded-lg border px-2.5 py-2 text-[13px] outline-none focus:ring-2"
+                style={{
+                  borderColor: "var(--separator)",
+                  background: "var(--bg-tertiary)",
+                  color: "var(--fg)",
+                  ["--tw-ring-color" as string]: "rgba(0,168,118,0.3)",
+                }}
+              />
+              <button
+                onClick={queryMailById}
+                className="pressable rounded-lg px-2.5 py-2 text-[13px] font-medium"
+                style={{ background: "var(--fill)", color: "var(--accent)" }}
+                title="按邮件 ID 直达"
+              >
+                直达
+              </button>
+            </div>
           </div>
         )}
 
