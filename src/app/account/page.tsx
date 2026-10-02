@@ -32,6 +32,9 @@ export default function AccountPage() {
   // webhook
   const [webhook, setWebhook] = useState<any | null>(null);
   const [whUrl, setWhUrl] = useState("");
+  const [whMethod, setWhMethod] = useState("POST");
+  const [whHeaders, setWhHeaders] = useState("{}");
+  const [whBody, setWhBody] = useState("");
   const [whEnabled, setWhEnabled] = useState(false);
 
   // 地址密码
@@ -82,6 +85,9 @@ export default function AccountPage() {
         .then((r) => {
           setWebhook(r);
           setWhUrl(r?.url || "");
+          setWhMethod(r?.method || "POST");
+          setWhHeaders(r?.headers || "{}");
+          setWhBody(r?.body || "");
           setWhEnabled(r?.enabled === true);
         })
         .catch(() => {});
@@ -110,9 +116,9 @@ export default function AccountPage() {
         ...(webhook || {}),
         url: whUrl,
         enabled: whEnabled,
-        method: webhook?.method || "POST",
-        headers: webhook?.headers || "{}",
-        body: webhook?.body || "mail received: ${subject}",
+        method: whMethod,
+        headers: whHeaders,
+        body: whBody || "mail received: ${subject}",
       });
       push("success", "Webhook 已保存");
     } catch (e) {
@@ -395,6 +401,33 @@ export default function AccountPage() {
                     onChange={(e) => setWhUrl(e.target.value)}
                     placeholder="https://example.com/hook"
                     className="ios-input mt-3"
+                  />
+                  <div className="segmented mt-3">
+                    {["POST", "PUT", "PATCH"].map((m) => (
+                      <button
+                        key={m}
+                        className={whMethod === m ? "active" : ""}
+                        onClick={() => setWhMethod(m)}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={whHeaders}
+                    onChange={(e) => setWhHeaders(e.target.value)}
+                    rows={3}
+                    placeholder='Headers (JSON)，如 {"Content-Type":"application/json"}'
+                    className="mt-3 w-full resize-none rounded-xl p-3 text-[13px] font-mono outline-none focus:ring-2 focus:ring-[#00a876]/30"
+                    style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
+                  />
+                  <textarea
+                    value={whBody}
+                    onChange={(e) => setWhBody(e.target.value)}
+                    rows={3}
+                    placeholder="Body 模板，支持 ${subject} ${from} ${to} ${parsedText}"
+                    className="mt-3 w-full resize-none rounded-xl p-3 text-[13px] font-mono outline-none focus:ring-2 focus:ring-[#00a876]/30"
+                    style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
                   />
                   <button onClick={saveWebhook} className="btn-primary mt-3 w-full">
                     保存 Webhook
