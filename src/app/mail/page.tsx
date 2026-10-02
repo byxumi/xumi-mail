@@ -36,6 +36,8 @@ export default function MailPage() {
   // 多选模式
   const [multiSelect, setMultiSelect] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [showAddressManage, setShowAddressManage] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<Array<{ jwt: string; address: string }>>([]);
   const router = useRouter();
 
   // 上一次邮件总数（用于自动刷新时发现新邮件）
@@ -179,7 +181,10 @@ export default function MailPage() {
       // 当前地址（收件箱为空时也能显示）
       api
         .addressSettings()
-        .then((s) => setMyAddress(s.address))
+        .then((s) => {
+          setMyAddress(s.address);
+          bindCurrentAddress();
+        })
         .catch(() => {});
     } else {
       setInbox([]);
@@ -335,6 +340,88 @@ export default function MailPage() {
       push("error", `打包下载失败：${(e as Error).message}`);
     }
   };
+
+  // 从 JWT 解析地址（对齐上游 parseJwtAddress）
+  const parseJwtAddress = (curJwt: string): string => {
+    try {
+      const payload = JSON.parse(
+        decodeURIComponent(
+          atob(curJwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
+        )
+      );
+      return typeof payload.address === "string" ? payload.address : "";
+    } catch {
+      return "";
+    }
+  };
+
+  // 读取本地保存的多个地址（对齐上游 LocalAddressCache）
+  const loadSavedAddresses = useCallback(() => {
+    try {
+      const raw = localStorage.getItem("LocalAddressCache") || "[]";
+      const list: string[] = JSON.parse(raw);
+      if (!Array.isArray(list)) return;
+      const seen = new Set<string>();
+      const out: Array<{ jwt: string; address: string }> = [];
+      for (const curJwt of list) {
+        const addr = parseJwtAddress(curJwt);
+        if (!addr || seen.has(curJwt)) continue;
+        seen.add(curJwt);
+        out.push({ jwt: curJwt, address: addr });
+      }
+      setSavedAddresses(out);
+    } catch {
+      setSavedAddresses([]);
+    }
+  }, []);
+
+  // 绑定当前地址到本地缓存
+  const bindCurrentAddress = useCallback(() => {
+    if (!token) return;
+    try {
+      const raw = localStorage.getItem("LocalAddressCache") || "[]";
+      const parsed: unknown = JSON.parse(raw);
+      const list: string[] = Array.isArray(parsed) ? (parsed as string[]) : [];
+      if (!list.includes(token)) list.push(token);
+      localStorage.setItem("LocalAddressCache", JSON.stringify(list));
+      loadSavedAddresses();
+    } catch {
+      // ignore
+    }
+  }, [token, loadSavedAddresses]);
+
+  // 切换地址（对齐上游 changeMailAddress）
+  const switchAddress = useCallback(
+    (curJwt: string) => {
+      setToken(curJwt);
+      setSelectedId(null);
+      setMultiSelect(false);
+      setSelectedIds([]);
+      setShowAddressManage(false);
+      push("success", "已切换邮箱地址");
+    },
+    [setToken, push]
+  );
+
+  // 解绑地址（不能解绑当前使用的）
+  const unbindAddress = useCallback(
+    (curJwt: string) => {
+      if (curJwt === token) return;
+      try {
+        const raw = localStorage.getItem("LocalAddressCache") || "[]";
+        const list: string[] = JSON.parse(raw);
+        if (!Array.isArray(list)) return;
+        localStorage.setItem(
+          "LocalAddressCache",
+          JSON.stringify(list.filter((j) => j !== curJwt))
+        );
+        loadSavedAddresses();
+      } catch {
+        // ignore
+      }
+    },
+    [token, loadSavedAddresses]
+  );
 
   /** ---------- 回复 / 转发（跳转发件页并预填草稿） ---------- */
   const openDraft = (mode: "reply" | "forward", mail: ParsedMailDTO) => {
@@ -620,7 +707,7 @@ export default function MailPage() {
 
         {/* 地址胶囊 */}
         <div className="mt-4">
-          <AddressChip address={myAddress} onCopy={copy} />
+          <AddressChip address={myAddress} onCopy={copy} onManage={() => { loadSavedAddresses(); setShowAddressManage(true); }} />
         </div>
 
         {tab === "inbox" && (
@@ -670,6 +757,93 @@ export default function MailPage() {
       </main>
 
       {/* 已读/未读确认弹窗 */}
+      {/* 地址管理弹窗（对齐上游 LocalAddress / AddressBar addressManage） */}
+      <AnimatePresence>
+        {showAddressManage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 lg:items-center"
+            onClick={() => setShowAddressManage(false)}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              className="w-full max-w-md overflow-hidden rounded-3xl"
+              style={{ background: "var(--bg)", border: "1px solid var(--separator)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "var(--separator)" }}>
+                <span className="text-[16px] font-semibold" style={{ color: "var(--fg)" }}>
+                  地址管理
+                </span>
+                <button
+                  onClick={() => setShowAddressManage(false)}
+                  className="pressable rounded-full p-2"
+                  style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                >
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
+              <div className="max-h-[50vh] overflow-y-auto p-3">
+                {savedAddresses.length === 0 && (
+                  <p className="px-2 py-6 text-center text-[13px]" style={{ color: "var(--fg-secondary)" }}>
+                    暂无已保存的地址。创建新地址后会自动保存，便于快速切换。
+                  </p>
+                )}
+                {savedAddresses.map((item) => (
+                  <div
+                    key={item.jwt}
+                    className="flex items-center justify-between gap-2 rounded-2xl px-3 py-2.5"
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-medium" style={{ color: "var(--fg)" }}>
+                        {item.address}
+                      </p>
+                      {item.jwt === token && (
+                        <span
+                          className="mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium text-white"
+                          style={{ background: "var(--accent)" }}
+                        >
+                          当前使用
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {item.jwt !== token && (
+                        <button
+                          onClick={() => switchAddress(item.jwt)}
+                          className="pressable rounded-full px-3 py-1.5 text-[12px] font-medium text-white"
+                          style={{ background: "var(--accent)" }}
+                        >
+                          切换
+                        </button>
+                      )}
+                      {item.jwt !== token && (
+                        <button
+                          onClick={() => unbindAddress(item.jwt)}
+                          className="pressable rounded-full px-3 py-1.5 text-[12px] font-medium"
+                          style={{ background: "rgba(255,59,48,0.12)", color: "#ff3b30" }}
+                        >
+                          解绑
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t px-5 py-3" style={{ borderColor: "var(--separator)" }}>
+                <p className="text-center text-[12px]" style={{ color: "var(--fg-secondary)" }}>
+                  点击「复制」可复制地址，切换后收件箱自动刷新
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ConfirmDialog
         open={confirmAction?.type === "delete-mail"}
         title="删除这封邮件？"
@@ -731,7 +905,7 @@ export default function MailPage() {
   );
 }
 
-function AddressChip({ address, onCopy }: { address: string; onCopy: (t: string, label?: string) => void }) {
+function AddressChip({ address, onCopy, onManage }: { address: string; onCopy: (t: string, label?: string) => void; onManage?: () => void }) {
   const { push } = useToast();
   if (!address) return null;
   return (
@@ -751,6 +925,19 @@ function AddressChip({ address, onCopy }: { address: string; onCopy: (t: string,
         <Icon name="copy" size={12} strokeWidth={2.2} />
         复制
       </span>
+      {onManage && (
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            onManage();
+          }}
+          className="ml-2 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-medium"
+          style={{ background: "var(--fill)", color: "var(--accent)" }}
+        >
+          <Icon name="more" size={12} strokeWidth={2.2} />
+          管理
+        </span>
+      )}
     </button>
   );
 }
