@@ -1383,10 +1383,11 @@ function CodeHero({
   meta,
   onCopy,
 }: {
-  meta: { type: string; result: string };
+  meta: { type: string; result: string; resultText?: string };
   onCopy: (t: string, label?: string) => void;
 }) {
   const isCode = meta.type === "auth_code";
+  const isLink = !isCode && (meta.type.endsWith("_link") || meta.type === "link");
   const labelMap: Record<string, string> = {
     auth_code: "验证码",
     auth_link: "验证链接",
@@ -1394,24 +1395,48 @@ function CodeHero({
     subscription_link: "退订链接",
     other_link: "链接",
   };
+  const display = meta.resultText && meta.resultText !== meta.result ? meta.resultText : meta.result;
   return (
-    <button onClick={() => onCopy(meta.result, "已复制")} className="code-hero pressable w-full">
-      <span className="block text-[13px] font-medium uppercase tracking-widest opacity-80">
-        {labelMap[meta.type] || "提取"}
+    <div className="code-hero pressable w-full">
+      <span className="flex items-center justify-between">
+        <span className="block text-[13px] font-medium uppercase tracking-widest opacity-80">
+          {labelMap[meta.type] || "提取"}
+        </span>
+        {isLink && (
+          <a
+            href={meta.result}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="pressable rounded-full px-3 py-1 text-[12px] font-semibold text-white"
+            style={{ background: "var(--accent)" }}
+          >
+            打开链接
+          </a>
+        )}
       </span>
-      <span className="mt-1 block break-all text-[24px]">{meta.result}</span>
+      <button
+        onClick={() => onCopy(meta.result, "已复制")}
+        className="mt-1 block w-full break-all text-left text-[20px]"
+      >
+        {display}
+      </button>
       <span className="mt-1 block text-[12px] opacity-70">点击复制</span>
-    </button>
+    </div>
   );
 }
 
-function useExtractMeta(metadata: string | null): { type: string; result: string } | null {
+function useExtractMeta(metadata: string | null): { type: string; result: string; resultText?: string } | null {
   if (!metadata) return null;
   try {
     const parsed = JSON.parse(metadata);
     const extract = parsed?.ai_extract;
     if (extract && extract.type !== "none" && extract.result) {
-      return { type: extract.type, result: extract.result };
+      return {
+        type: extract.type,
+        result: extract.result,
+        resultText: typeof extract.result_text === "string" ? extract.result_text : undefined,
+      };
     }
   } catch {
     // ignore
