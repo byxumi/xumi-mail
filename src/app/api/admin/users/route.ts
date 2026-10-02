@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { getEnv, json, text, ApiError, requireAdmin } from "@/lib/server";
+import { getEnv, json, text, ApiError, requireAdmin, readJson } from "@/lib/server";
+import { sha256Hex } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,7 +26,43 @@ export async function GET(req: NextRequest) {
     sql += ` ORDER BY u.created_at DESC LIMIT ? OFFSET ?`;
     params.push(limit, offset);
     const { results } = await env.DB.prepare(sql).bind(...params).all();
-    return json({ results });
+    const countRow = await env.DB.prepare(
+      query
+        ? `SELECT count(*) as cnt FROM users WHERE user_email LIKE ?`
+        : `SELECT count(*) as cnt FROM users`
+    )
+      .bind(...(query ? [`%${query}%`] : []))
+      .first();
+    return json({ results, count: (countRow as any)?.cnt ?? results.length });
+  } catch (e) {
+    return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
+  }
+}
+
+/** 管理员：创建用户（body {email, password}，密码需 ≥6 位，后端 sha256 存） */
+export async function POST(req: NextRequest) {
+  try {
+    const env = await getEnv();
+    requireAdmin(env, req);
+    const body = (await readJson(req)) as any;
+    if (!body || typeof body !== "object") return text("请求体无效", 400);
+    const email = body.email !== undefined ? String(body.email).trim() : "";
+    const password = body.password !== undefined ? String(body.password) : "";
+    if (!email || !password) return text("邮箱和密码不能为空", 400);
+    if (password.length < 6) return text("密码至少 6 位", 400);
+    const hashed = await sha256Hex(password);
+    const userInfo = JSON.stringify({});
+    try {
+      await env.DB.prepare(
+        `INSERT INTO users (user_email, password, user_info, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`
+      )
+        .bind(email, hashed, userInfo)
+        .run();
+    } catch (e: any) {
+      if (String(e?.message || "").includes("UNIQUE")) return text("用户名已存在", 400);
+      throw e;
+    }
+    return json({ success: true });
   } catch (e) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }

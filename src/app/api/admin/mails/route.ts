@@ -25,7 +25,12 @@ export async function GET(req: NextRequest) {
     params.push(limit, offset);
     const { results } = await env.DB.prepare(query).bind(...params).all();
     const resolved = await resolveRawEmailList(results as any[]);
-    return json({ results: resolved, count: resolved.length });
+    const countRow = await env.DB.prepare(
+      address ? `SELECT count(*) as cnt FROM raw_mails WHERE address = ?` : `SELECT count(*) as cnt FROM raw_mails`
+    )
+      .bind(...(address ? [address] : []))
+      .first();
+    return json({ results: resolved, count: (countRow as any)?.cnt ?? results.length });
   } catch (e) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }

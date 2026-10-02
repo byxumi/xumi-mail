@@ -37,9 +37,6 @@ const normalizePath = (path, method = 'GET') => {
     if (sendDelMatch && method === 'DELETE') return `/api/sendbox?id=${sendDelMatch[1]}`;
     // 删除地址（上游 /api/delete_address -> 本仓库 DELETE /api/address）
     if (path === '/api/delete_address') return '/api/address';
-    // 兑换结果查询（上游 /redeem_api/query|result -> 本仓库 GET /api/redeem_meta）
-    const redeemMatch = path.match(/^\/api\/redeem\/(query|result)$/);
-    if (redeemMatch) return `/api/redeem_meta?kind=${redeemMatch[1]}`;
     // 管理兑换码列表/创建：上游 /admin/redeem_codes\[...\] (GET/POST) -> /api/admin/redeem
     if (path.startsWith('/api/admin/redeem_codes')) {
         const rest = path.slice('/api/admin/redeem_codes'.length);
@@ -53,9 +50,8 @@ const normalizePath = (path, method = 'GET') => {
         if (exportMatch) return `/api/admin/redeem/export?${exportMatch[1]}`;
         return '/api/admin/redeem';
     }
-    // 管理用户角色/worker 配置：映射到我们已有的配置持久化端点
-    if (path === '/api/admin/user_roles') return '/api/admin/config?key=user_roles';
-    if (path === '/api/admin/worker/configs') return '/api/admin/config';
+    // 管理用户角色/worker 配置：现已提供真实路由，直通
+    // (用户角色 /api/admin/user_roles、worker 配置 /api/admin/worker/configs)
     // 管理-发送箱/清理类（我们将它们映射到对应简单端点，页面侧会降级提示）
     if (/^\/api\/admin\/sendbox\?/.test(path)) return path;
     if (/^\/api\/admin\/clear_inbox\/[^/]+$/.test(path)) return path;

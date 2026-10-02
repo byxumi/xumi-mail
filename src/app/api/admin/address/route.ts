@@ -14,7 +14,10 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "50") || 50, 200);
     const offset = parseInt(searchParams.get("offset") || "0") || 0;
     const query = searchParams.get("query") || "";
-    let sql = `SELECT a.*, (SELECT count(*) FROM raw_mails WHERE address = a.name) as mail_count FROM address a`;
+    let sql = `SELECT a.*,
+                   (SELECT count(*) FROM raw_mails WHERE address = a.name) as mail_count,
+                   (SELECT count(*) FROM sendbox WHERE address = a.name) as send_count
+            FROM address a`;
     const params: unknown[] = [];
     if (query) {
       sql += ` WHERE a.name LIKE ?`;
@@ -23,7 +26,12 @@ export async function GET(req: NextRequest) {
     sql += ` ORDER BY a.created_at DESC LIMIT ? OFFSET ?`;
     params.push(limit, offset);
     const { results } = await env.DB.prepare(sql).bind(...params).all();
-    return json({ results });
+    const countRow = await env.DB.prepare(
+      query ? `SELECT count(*) as cnt FROM address WHERE name LIKE ?` : `SELECT count(*) as cnt FROM address`
+    )
+      .bind(...(query ? [`%${query}%`] : []))
+      .first();
+    return json({ results, count: (countRow as any)?.cnt ?? results.length });
   } catch (e) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }

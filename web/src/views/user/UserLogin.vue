@@ -2,12 +2,10 @@
 import { useMessage } from 'naive-ui'
 import { onMounted, ref } from "vue";
 import { useScopedI18n } from '@/i18n/app'
-import { KeyFilled } from '@vicons/material'
 
 import { api } from '../../api';
 import { useGlobalState } from '../../store'
 import { hashPassword } from '../../utils';
-import { startAuthentication } from '@simplewebauthn/browser';
 
 import Turnstile from '../../components/Turnstile.vue';
 
@@ -134,33 +132,6 @@ const emailSignup = async () => {
     }
 };
 
-const passkeyLogin = async () => {
-    try {
-        const options = await api.fetch(`/user_api/passkey/authenticate_request`, {
-            method: 'POST',
-            body: JSON.stringify({
-                domain: location.hostname,
-            })
-        })
-        const credential = await startAuthentication({ optionsJSON: options })
-
-        // Send the result to the server and return the promise.
-        const res = await api.fetch(`/user_api/passkey/authenticate_response`, {
-            method: 'POST',
-            body: JSON.stringify({
-                origin: location.origin,
-                domain: location.hostname,
-                credential
-            })
-        })
-        userJwt.value = res.jwt;
-        location.reload();
-    } catch (e) {
-        console.error(e)
-        message.error(e.message)
-    }
-};
-
 const oauth2Login = async (clientID) => {
     try {
         userOauth2SessionClientID.value = clientID;
@@ -198,12 +169,6 @@ onMounted(async () => {
                         {{ t('forgotPassword') }}
                     </n-button>
                     <n-divider />
-                    <n-button @click="passkeyLogin" type="primary" block secondary strong>
-                        <template #icon>
-                            <n-icon :component="KeyFilled" />
-                        </template>
-                        {{ t('loginWithPasskey') }}
-                    </n-button>
                     <n-button @click="oauth2Login(item.clientID)" v-for="item in userOpenSettings.oauth2ClientIDs"
                         :key="item.clientID" block secondary strong>
                         <template #icon v-if="item.icon">

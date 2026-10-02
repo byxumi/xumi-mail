@@ -600,3 +600,58 @@ export const deleteRedeemCode = async (
   if ((result.meta.changes ?? 0) !== 1) throw new ApiError(404, "兑换码不存在");
   return true;
 };
+
+/** 更新兑换码（redeem_type/value/enabled/expires_at 均可改；已兑换的不可改） */
+export const updateRedeemCode = async (
+  env: Env,
+  rawId: string | null,
+  body: { redeem_type?: unknown; value?: unknown; enabled?: unknown; expires_at?: unknown }
+): Promise<boolean> => {
+  const id = parsePositiveId(rawId);
+  if (!id) throw new ApiError(400, "无效的兑换码 ID");
+  const { redeem_type, value, enabled, expires_at } = body;
+  if (!isRedeemType(redeem_type) || typeof enabled !== "boolean" || !validateValue(value)) {
+    throw new ApiError(400, "无效的兑换码数据");
+  }
+  const redeemValue = parseRedeemValue(env, redeem_type, value);
+  if (!redeemValue) throw new ApiError(400, "无效的兑换码数据");
+  const expiresAt = normalizeExpiresAt(expires_at);
+  if (expiresAt === undefined) throw new ApiError(400, "无效的过期时间");
+  const row = await env.DB.prepare(`SELECT redeemed FROM redeem_codes WHERE id = ?`).bind(id).first<{ redeemed: number }>();
+  if (!row) throw new ApiError(404, "兑换码不存在");
+  if (row.redeemed === 1) throw new ApiError(400, "已兑换的兑换码不可修改");
+  const result = await env.DB.prepare(
+    `UPDATE redeem_codes SET redeem_type = ?, value = ?, enabled = ?, expires_at = ?, updated_at = datetime('now') WHERE id = ?`
+  )
+    .bind(redeem_type, stringifyRedeemValue(redeemValue), enabled ? 1 : 0, expiresAt, id)
+    .run();
+  if ((result.meta.changes ?? 0) !== 1) throw new ApiError(404, "兑换码不存在");
+  return true;
+};
+
+/** 导出兑换码 CSV（直接返回文本，前端 Blob 下载） */
+export const exportRedeemCodes = async (
+  env: Env,
+  query: URLSearchParams
+): Promise<string> => {
+  const redeem_type = query.get("redeem_type");
+  const rawLimit = query.get("limit");
+  if (!isRedeemType(redeem_type)) throw new ApiError(400, "无效的兑换码类型");
+  const limit = /^\d+$/.test(rawLimit || "")
+    ? Math.min(Math.max(Number(rawLimit), 1), 10_000)
+    : 10_000;
+  const rows = await env.DB.prepare(
+    `SELECT code, redeem_type, value, enabled, redeemed, expires_at, redeemed_at
+     FROM redeem_codes WHERE redeem_type = ?
+     ORDER BY id DESC LIMIT ?`
+  )
+    .bind(redeem_type, limit)
+    .all<any>();
+  const header = ["code", "redeem_type", "value", "enabled", "redeemed", "expires_at", "redeemed_at"];
+  const lines = rows.results.map((row) =>
+    [row.code, row.redeem_type, row.value, row.enabled, row.redeemed, row.expires_at, row.redeemed_at]
+      .map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`)
+      .join(",")
+  );
+  return [header.join(","), ...lines].join("\n");
+};

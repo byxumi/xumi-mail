@@ -17,4 +17,10 @@ export const CONSTANTS = {
   EMAIL_KV_BLACK_LIST: "temp-mail-email-black-list",
   SEND_MAIL_LIMIT_COUNT_KEY_PREFIX: "send_mail_limit_count:",
   SEND_MAIL_LIMIT_CONFIG_KEY: "send_mail_limit_config",
+  // admin-only settings keys（对齐上游）
+  IP_BLACKLIST_SETTINGS_KEY: "ip_blacklist_settings",
+  OAUTH2_SETTINGS_KEY: "oauth2_settings",
+  ROLE_ADDRESS_CONFIG_KEY: "role_address_config",
+  DB_VERSION_KEY: "db_version",
+  DB_VERSION: "v0.0.9",
 } as const;

@@ -20,12 +20,29 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** 保存自动清理设置 */
+/** 校验自定义清理 SQL（对齐上游 cleanup_api：空/过长/非 DELETE/含分号/含注释均拒绝） */
+function validateCustomSql(name: string, sql: string): string | null {
+  if (!sql || !sql.trim()) return "sql 不能为空";
+  const normalized = sql.trim();
+  if (normalized.length > 1000) return "sql 过长（最多 1000 字符）";
+  if (!/^DELETE\s+/i.test(normalized)) return "sql 必须以 DELETE 开头";
+  if (normalized.includes(";")) return "sql 不能包含分号";
+  if (normalized.includes("--") || normalized.includes("/*")) return "sql 不能包含注释";
+  return null;
+}
+
+/** 保存自动清理设置（含 customSqlCleanupList 校验） */
 export async function POST(req: NextRequest) {
   try {
     const env = await getEnv();
     requireAdmin(env, req);
     const settings = (await req.json().catch(() => ({}))) as CleanupSettings;
+    const customList = settings.customSqlCleanupList ?? [];
+    if (!Array.isArray(customList)) return text("customSqlCleanupList 必须为数组", 400);
+    for (const item of customList) {
+      const err = validateCustomSql(item.name ?? "", item.sql ?? "");
+      if (err) return text(`[${item.name ?? "unnamed"}]: ${err}`, 400);
+    }
     await saveSetting(env, CONSTANTS.AUTO_CLEANUP_KEY, JSON.stringify(settings));
     return json({ success: true });
   } catch (e) {

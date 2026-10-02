@@ -5,19 +5,24 @@ import { sendMail } from "@/lib/sendmail";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** 管理员代发邮件 */
+/** 管理员代发邮件（前端 SendMail.vue 发送 {from_name, from_mail, to_name, to_mail, subject, is_html, content}） */
 export async function POST(req: NextRequest) {
   try {
     const env = await getEnv();
     requireAdmin(env, req);
-    const { address, from_name, to_mail, to_name, subject, content, is_html } = (await req.json().catch(
+    const { from_name, from_mail, to_name, to_mail, subject, is_html, content } = (await req.json().catch(
       () => ({})
     )) as any;
-    if (!address || !to_mail || !subject || !content) {
-      return text("缺少必要字段（address/to_mail/subject/content）", 400);
+    if (!from_mail || !to_mail || !subject || !content) {
+      return text("缺少必要字段（from_mail/to_mail/subject/content）", 400);
     }
     try {
-      await sendMail(env, address, { from_name, to_mail, to_name, subject, content, is_html }, { isAdmin: true });
+      await sendMail(
+        env,
+        String(from_mail),
+        { from_name, to_mail, to_name, subject, content, is_html },
+        { isAdmin: true }
+      );
     } catch (e) {
       return text(`发送失败: ${(e as Error).message}`, 400);
     }
