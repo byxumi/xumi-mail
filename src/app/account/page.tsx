@@ -196,6 +196,16 @@ export default function AccountPage() {
     return `${base}/?jwt=${encodeURIComponent(token)}`;
   };
 
+  // Agent 配置 JSON（对齐上游 AddressCredentialContent agentConfigJson）
+  const buildAgentConfig = (): string => {
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    return JSON.stringify(
+      { base: base.replace(/\/$/, ""), jwt: token },
+      null,
+      2
+    );
+  };
+
   return (
     <MotionPage className="min-h-screen">
       <Header />
@@ -241,6 +251,9 @@ export default function AccountPage() {
               <FormRow iconName="mail" label="SMTP / IMAP 客户端配置" onClick={() => copy(buildClientConfigText(), "客户端配置已复制")} />
               <FormRow iconName="link" label="自动登录链接" onClick={() => copy(buildAutoLoginUrl(), "自动登录链接已复制")} />
               <FormRow iconName="key" label="地址令牌（JWT）" onClick={() => copy(token, "JWT 已复制")} />
+              {settings?.enableAgentEmailInfo && (
+                <FormRow iconName="bot" label="Agent 配置（JSON）" onClick={() => copy(buildAgentConfig(), "Agent 配置已复制")} />
+              )}
             </div>
             <p className="mb-4 mt-1 px-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
               点击即可复制对应内容，用于在邮件客户端 / Agent 中接入
