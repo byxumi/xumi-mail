@@ -35,6 +35,7 @@ function SendPageInner() {
   const { token } = useAddressToken();
 
   const [fromName, setFromName] = useState("");
+  const [toName, setToName] = useState("");
   const [toMail, setToMail] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
@@ -60,6 +61,8 @@ function SendPageInner() {
     const body = searchParams.get("body") || "";
     if (mode === "reply" || mode === "forward") {
       if (to && !toMail) setToMail(to);
+      const toNameParam = searchParams.get("toName");
+      if (toNameParam && !toName) setToName(toNameParam);
       if (subject && !subject) setSubject(subject);
       if (body && !content) {
         setContent(body);
@@ -132,6 +135,7 @@ function SendPageInner() {
     try {
       await api.sendMail({
         from_name: fromName || undefined,
+        to_name: toName || undefined,
         to_mail: toMail.trim(),
         subject: subject.trim(),
         content,
@@ -237,6 +241,19 @@ function SendPageInner() {
               value={fromName}
               onChange={(e) => setFromName(e.target.value)}
               placeholder="可选名称"
+              className="flex-1 bg-transparent px-2 py-1 text-[16px] outline-none"
+              style={{ color: "var(--fg)" }}
+            />
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 rounded-xl p-3" style={{ background: "var(--bg-tertiary)" }}>
+            <span className="text-[14px] font-medium" style={{ color: "var(--fg-secondary)" }}>
+              收件人名称
+            </span>
+            <input
+              value={toName}
+              onChange={(e) => setToName(e.target.value)}
+              placeholder="可选（显示在收件人栏）"
               className="flex-1 bg-transparent px-2 py-1 text-[16px] outline-none"
               style={{ color: "var(--fg)" }}
             />
