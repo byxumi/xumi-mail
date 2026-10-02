@@ -7,6 +7,15 @@ import { Icon } from "@/components/Icon";
 import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
+import {
+  UserSettingsView,
+  AccountSettingsView,
+  AiExtractView,
+  IpBlacklistView,
+  WebhookView,
+  MailWebhookView,
+  RoleAddressConfigView,
+} from "@/app/admin/views";
 
 type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "sender" | "settings" | "db";
 
@@ -15,6 +24,7 @@ export default function AdminPage() {
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminPwd, setAdminPwd] = useState("");
   const [tab, setTab] = useState<Tab>("stats");
+  const [subTab, setSubTab] = useState<"cleanup" | "account" | "user" | "ai" | "ip" | "webhook" | "mailwebhook" | "role">("cleanup");
   const [stats, setStats] = useState<any>(null);
   const [mails, setMails] = useState<any[]>([]);
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -194,28 +204,55 @@ export default function AdminPage() {
         {tab === "redeem" && <RedeemAdminView />}
         {tab === "sender" && <SenderAccessView />}
         {tab === "db" && <DatabaseView />}
-        {tab === "settings" && cleanup && (
-          <CleanupView
-            cleanup={cleanup}
-            onSave={async (body) => {
-              try {
-                await api.saveAdminAutoCleanup(body);
-                push("success", "已保存");
-                setCleanup(await api.adminAutoCleanup());
-              } catch (e) {
-                push("error", (e as Error).message);
-              }
-            }}
-            onClean={async (cleanType, cleanDays) => {
-              try {
-                await api.adminCleanup({ cleanType, cleanDays });
-                push("success", "清理完成");
-                await loadAll();
-              } catch (e) {
-                push("error", (e as Error).message);
-              }
-            }}
-          />
+        {tab === "settings" && (
+          <div>
+            <Segmented
+              value={subTab}
+              onChange={(v) => setSubTab(v)}
+              options={[
+                { value: "cleanup", label: "清理" },
+                { value: "account", label: "邮箱设置" },
+                { value: "user", label: "用户设置" },
+                { value: "ai", label: "AI 提取" },
+                { value: "ip", label: "IP 黑名单" },
+                { value: "webhook", label: "Webhook" },
+                { value: "mailwebhook", label: "邮件 Webhook" },
+                { value: "role", label: "角色配额" },
+              ]}
+            />
+            <div className="mt-4">
+              {subTab === "cleanup" && cleanup && (
+                <CleanupView
+                  cleanup={cleanup}
+                  onSave={async (body) => {
+                    try {
+                      await api.saveAdminAutoCleanup(body);
+                      push("success", "已保存");
+                      setCleanup(await api.adminAutoCleanup());
+                    } catch (e) {
+                      push("error", (e as Error).message);
+                    }
+                  }}
+                  onClean={async (cleanType, cleanDays) => {
+                    try {
+                      await api.adminCleanup({ cleanType, cleanDays });
+                      push("success", "清理完成");
+                      await loadAll();
+                    } catch (e) {
+                      push("error", (e as Error).message);
+                    }
+                  }}
+                />
+              )}
+              {subTab === "account" && <AccountSettingsView />}
+              {subTab === "user" && <UserSettingsView />}
+              {subTab === "ai" && <AiExtractView />}
+              {subTab === "ip" && <IpBlacklistView />}
+              {subTab === "webhook" && <WebhookView />}
+              {subTab === "mailwebhook" && <MailWebhookView />}
+              {subTab === "role" && <RoleAddressConfigView />}
+            </div>
+          </div>
         )}
       </main>
 
