@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton, Spinner, Segmented, useCopy, SearchInput, ConfirmDialog } from "@/components/ui";
@@ -30,7 +31,11 @@ export default function MailPage() {
   const [sent, setSent] = useState<any[]>([]);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-mail" | "clear-inbox" | "delete-sent"; id?: number }>(null);
+  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-mail" | "clear-inbox" | "delete-sent" | "multi-delete"; id?: number }>(null);
+  // 多选模式
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const router = useRouter();
 
   // 上一次邮件总数（用于自动刷新时发现新邮件）
   const prevCountRef = useRef(0);
@@ -212,6 +217,105 @@ export default function MailPage() {
 
   const selectedMail = inbox.find((m) => m.id === selectedId) || null;
 
+  /** ---------- 多选模式 ---------- */
+  const toggleMultiSelect = () => {
+    setMultiSelect((v) => {
+      if (v) {
+        setSelectedIds([]);
+        return false;
+      }
+      return true;
+    });
+  };
+
+  const toggleSelectOne = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const toggleSelectAll = () => {
+    // 基于当前可见（过滤后）邮件判断是否全选
+    const allVisibleIds = searchFiltered.map((m) => m.id);
+    const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.includes(id));
+    setSelectedIds(allSelected ? selectedIds.filter((id) => !allVisibleIds.includes(id)) : [...new Set([...selectedIds, ...allVisibleIds])]);
+  };
+
+  const multiDelete = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) {
+      push("info", "请先勾选邮件");
+      return;
+    }
+    try {
+      await Promise.all(ids.map((id) => api.deleteMail(id)));
+      setInbox((prev) => prev.filter((m) => !ids.includes(m.id)));
+      if (selectedId != null && ids.includes(selectedId)) setSelectedId(null);
+      setSelectedIds([]);
+      push("success", `已删除 ${ids.length} 封邮件`);
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  };
+
+  const multiDownload = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) {
+      push("info", "请先勾选邮件");
+      return;
+    }
+    try {
+      // 一次性拉取选中邮件的原始内容（含 raw）
+      const mails = await Promise.all(ids.map((id) => api.mail(id)));
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      mails.forEach((m) => {
+        if (!m) return;
+        const raw = m.raw ?? "";
+        zip.file(`${m.id}.eml`, raw);
+      });
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mails-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setSelectedIds([]);
+      push("success", `已打包 ${mails.filter(Boolean).length} 封邮件`);
+    } catch (e) {
+      push("error", `打包下载失败：${(e as Error).message}`);
+    }
+  };
+
+  /** ---------- 回复 / 转发（跳转发件页并预填草稿） ---------- */
+  const openDraft = (mode: "reply" | "forward", mail: ParsedMailDTO) => {
+    const sender = extractSender(mail.sender);
+    const target = mode === "reply" ? (sender.email || mail.source) : "";
+    const params = new URLSearchParams({
+      mode,
+      to: target,
+      subject:
+        mode === "reply"
+          ? `Re: ${mail.subject || ""}`
+          : `Fwd: ${mail.subject || ""}`,
+      body: `${mode === "reply" ? "在 " : "转发自 "}${formatTime(mail.created_at)}，${sender.name || sender.email || "发件人"} 写道：\n\n${(mail.text || extractTextPreview(mail.html || "")).slice(0, 4000)}`,
+    });
+    router.push(`/send?${params.toString()}`);
+  };
+
+  /** ---------- 上 / 下一封 ---------- */
+  const visibleMails = tab === "inbox" ? searchFiltered : [];
+  const currentIndex = visibleMails.findIndex((m) => m.id === selectedId);
+  const canPrevMail = currentIndex > 0;
+  const canNextMail = currentIndex >= 0 && currentIndex < visibleMails.length - 1;
+  const goPrevMail = () => {
+    if (canPrevMail) setSelectedId(visibleMails[currentIndex - 1].id);
+  };
+  const goNextMail = () => {
+    if (canNextMail) setSelectedId(visibleMails[currentIndex + 1].id);
+  };
+
   if (!settingsLoaded) {
     return (
       <div className="min-h-screen">
@@ -375,7 +479,7 @@ export default function MailPage() {
             </FadeUp>
           </div>
           <div className="flex items-center gap-3">
-            {tab === "inbox" && unreadCount > 0 && (
+            {tab === "inbox" && unreadCount > 0 && !multiSelect && (
               <button
                 onClick={markAllRead}
                 className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium"
@@ -384,6 +488,17 @@ export default function MailPage() {
               >
                 <Icon name="check-check" size={15} />
                 全部已读
+              </button>
+            )}
+            {tab === "inbox" && (
+              <button
+                onClick={toggleMultiSelect}
+                className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium"
+                style={{ background: "var(--fill)", color: multiSelect ? "var(--accent)" : "var(--fg-secondary)" }}
+                title={multiSelect ? "退出多选" : "多选模式"}
+              >
+                <Icon name={multiSelect ? "square-check" : "square"} size={15} />
+                {multiSelect ? "完成" : "多选"}
               </button>
             )}
             <Segmented
@@ -399,6 +514,54 @@ export default function MailPage() {
             />
           </div>
         </div>
+
+        {/* 多选操作栏 */}
+        {multiSelect && tab === "inbox" && (
+          <div
+            className="mt-3 flex items-center gap-3 rounded-2xl px-4 py-2.5"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
+          >
+            <button
+              onClick={toggleSelectAll}
+              className="pressable flex items-center gap-1.5 text-[14px] font-medium"
+              style={{ color: "var(--accent)" }}
+            >
+              <Icon name={searchFiltered.length > 0 && searchFiltered.every((m) => selectedIds.includes(m.id)) ? "square-check" : "square"} size={16} />
+              {searchFiltered.length > 0 && searchFiltered.every((m) => selectedIds.includes(m.id)) ? "取消全选" : "全选"}
+            </button>
+            <span className="text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+              已选 {selectedIds.length} 封
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => void multiDownload()}
+                disabled={selectedIds.length === 0}
+                className="pressable flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-40"
+                style={{ background: "var(--fill)", color: "var(--accent)" }}
+                title="打包下载 EML"
+              >
+                <Icon name="file-down" size={15} />
+                打包下载
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedIds.length === 0) {
+                    push("info", "请先勾选邮件");
+                    return;
+                  }
+                  setConfirmAction({ type: "multi-delete" });
+                }}
+                disabled={selectedIds.length === 0}
+                className="pressable flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-40"
+                style={{ background: "rgba(255,59,48,0.12)", color: "#ff3b30" }}
+                title="批量删除选中邮件"
+              >
+                <Icon name="trash" size={14} />
+                删除
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 地址胶囊 */}
         <div className="mt-4">
@@ -418,6 +581,10 @@ export default function MailPage() {
             searchActive={search.trim().length > 0}
             selectedId={selectedId}
             onSelect={(id) => {
+              if (multiSelect) {
+                toggleSelectOne(id);
+                return;
+              }
               setSelectedId(id);
               setMobileDetailOpen(true);
               void setMailRead(id, false);
@@ -432,6 +599,15 @@ export default function MailPage() {
               await setMailRead(id, isUnread);
               if (isUnread) setSelectedId(null);
             }}
+            multiSelect={multiSelect}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelectOne}
+            onPrevMail={goPrevMail}
+            onNextMail={goNextMail}
+            canPrevMail={canPrevMail}
+            canNextMail={canNextMail}
+            onReply={(mail) => openDraft("reply", mail)}
+            onForward={(mail) => openDraft("forward", mail)}
           />
         ) : (
           <SentView sent={sent} onDelete={(id) => setConfirmAction({ type: "delete-sent", id })} />
@@ -484,6 +660,18 @@ export default function MailPage() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
+      <ConfirmDialog
+        open={confirmAction?.type === "multi-delete"}
+        title={selectedIds.length > 0 ? `删除选中的 ${selectedIds.length} 封邮件？` : "删除选中的邮件？"}
+        message="删除后不可恢复。"
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          void multiDelete();
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </MotionPage>
   );
 }
@@ -525,6 +713,15 @@ function InboxView({
   mobileDetailOpen,
   onCloseMobile,
   onToggleRead,
+  multiSelect,
+  selectedIds,
+  onToggleSelect,
+  onPrevMail,
+  onNextMail,
+  canPrevMail,
+  canNextMail,
+  onReply,
+  onForward,
 }: {
   inbox: ParsedMailDTO[];
   loading: boolean;
@@ -538,6 +735,15 @@ function InboxView({
   mobileDetailOpen: boolean;
   onCloseMobile: () => void;
   onToggleRead: (id: number, isUnread: boolean) => void;
+  multiSelect: boolean;
+  selectedIds: number[];
+  onToggleSelect: (id: number) => void;
+  onPrevMail: () => void;
+  onNextMail: () => void;
+  canPrevMail: boolean;
+  canNextMail: boolean;
+  onReply: (mail: ParsedMailDTO) => void;
+  onForward: (mail: ParsedMailDTO) => void;
 }) {
   const copy = useCopy();
 
@@ -572,6 +778,9 @@ function InboxView({
                     active={selectedId === mail.id}
                     onClick={() => onSelect(mail.id)}
                     index={i}
+                    multiSelect={multiSelect}
+                    selected={selectedIds.includes(mail.id)}
+                    onToggleSelect={() => onToggleSelect(mail.id)}
                   />
                 );
               })}
@@ -613,6 +822,12 @@ function InboxView({
                 onCopy={copy}
                 settings={settings}
                 onToggleRead={onToggleRead}
+                onReply={() => onReply(selectedMail)}
+                onForward={() => onForward(selectedMail)}
+                onPrevMail={onPrevMail}
+                onNextMail={onNextMail}
+                canPrevMail={canPrevMail}
+                canNextMail={canNextMail}
               />
             </motion.div>
           )}
@@ -654,6 +869,12 @@ function InboxView({
                 onCopy={copy}
                 settings={settings}
                 onToggleRead={onToggleRead}
+                onReply={() => onReply(selectedMail)}
+                onForward={() => onForward(selectedMail)}
+                onPrevMail={onPrevMail}
+                onNextMail={onNextMail}
+                canPrevMail={canPrevMail}
+                canNextMail={canNextMail}
               />
             </div>
           </motion.div>
@@ -669,12 +890,18 @@ function MailListItem({
   active,
   onClick,
   index = 0,
+  multiSelect = false,
+  selected = false,
+  onToggleSelect,
 }: {
   mail: ParsedMailDTO;
   sender: { name: string; email: string };
   active: boolean;
   onClick: () => void;
   index?: number;
+  multiSelect?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const isUnread = mail.is_unread === 1;
   return (
@@ -691,6 +918,23 @@ function MailListItem({
         whileHover={{ backgroundColor: "var(--bg-tertiary)" }}
         transition={{ duration: 0.12 }}
       >
+        {/* 多选勾选框 */}
+        {multiSelect && (
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors"
+            style={{
+              borderColor: selected ? "var(--accent)" : "var(--separator)",
+              background: selected ? "var(--accent)" : "transparent",
+              color: "#fff",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.();
+            }}
+          >
+            {selected && <Icon name="check" size={13} strokeWidth={3} />}
+          </span>
+        )}
         {/* 未读左侧强调条 */}
         {isUnread && (
           <span
@@ -740,17 +984,80 @@ function MailDetail({
   onCopy,
   settings,
   onToggleRead,
+  onReply,
+  onForward,
+  onPrevMail,
+  onNextMail,
+  canPrevMail,
+  canNextMail,
 }: {
   mail: ParsedMailDTO;
   onDelete: () => void;
   onCopy: (text: string, label?: string) => void;
   settings: any;
   onToggleRead?: (id: number, isUnread: boolean) => void;
+  onReply?: (mail: ParsedMailDTO) => void;
+  onForward?: (mail: ParsedMailDTO) => void;
+  onPrevMail?: () => void;
+  onNextMail?: () => void;
+  canPrevMail?: boolean;
+  canNextMail?: boolean;
 }) {
+  const { push } = useToast();
   const sender = extractSender(mail.sender);
   const meta = useExtractMeta(mail.metadata);
+  const [showText, setShowText] = useState(false);
+  const [showRemote, setShowRemote] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  return (
+  // 远程图片拦截：检测 html 中非 cid/data 的 http(s) img src
+  const remoteCount = useMemo(() => {
+    if (!mail.html) return 0;
+    const matches = mail.html.match(/<img[^>]+src\s*=\s*["'](https?:\/\/[^"']+)["']/gi);
+    return matches ? matches.length : 0;
+  }, [mail.html]);
+
+  const sanitizedHtml = useMemo(() => {
+    let html = rewriteInlineImages(mail.html || "", mail.id, mail.attachments);
+    html = sanitizeHtmlContent(html);
+    if (!showRemote && remoteCount > 0) {
+      // 远程图替换为 1x1 占位
+      html = html.replace(
+        /(<img[^>]*?\ssrc\s*=\s*["'])https?:\/\/[^"']+(["'])/gi,
+        `$1data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7$2`
+      );
+    }
+    return html;
+  }, [mail.html, mail.id, mail.attachments, showRemote, remoteCount]);
+
+  const downloadEml = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const rawMail = await api.mail(mail.id);
+      const content = rawMail?.raw ?? "";
+      if (!content) {
+        push("error", "无法获取邮件原文");
+        return;
+      }
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${mail.id}.eml`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      push("error", (e as Error).message || "下载失败");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const content = (
     <div className="flex h-full flex-col">
       {/* 头部 */}
       <div className="border-b px-5 pb-4 pt-5" style={{ borderColor: "var(--separator)" }}>
@@ -758,7 +1065,29 @@ function MailDetail({
           <h2 className="text-[18px] font-bold leading-snug" style={{ color: "var(--fg)" }}>
             {mail.subject || "(无主题)"}
           </h2>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {onPrevMail && (
+              <button
+                onClick={onPrevMail}
+                disabled={!canPrevMail}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-30"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                title="上一封"
+              >
+                <Icon name="chevron-up" size={16} />
+              </button>
+            )}
+            {onNextMail && (
+              <button
+                onClick={onNextMail}
+                disabled={!canNextMail}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-30"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                title="下一封"
+              >
+                <Icon name="chevron-down" size={16} />
+              </button>
+            )}
             {onToggleRead && (
               <button
                 onClick={() => onToggleRead(mail.id, mail.is_unread !== 1)}
@@ -772,6 +1101,23 @@ function MailDetail({
                 <Icon name={mail.is_unread === 1 ? "circle-dot" : "circle-check"} size={17} />
               </button>
             )}
+            <button
+              onClick={() => setFullscreen(true)}
+              className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+              style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+              title="全屏查看"
+            >
+              <Icon name="maximize" size={15} />
+            </button>
+            <button
+              onClick={() => void downloadEml()}
+              disabled={downloading}
+              className="pressable flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40"
+              style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+              title="下载 .eml"
+            >
+              <Icon name="file-down" size={15} />
+            </button>
             <button
               onClick={onDelete}
               className="pressable flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -859,18 +1205,116 @@ function MailDetail({
         </div>
       )}
 
+      {/* 远程图片拦截提示 */}
+      {remoteCount > 0 && !showRemote && (
+        <div
+          className="mx-5 mt-3 flex items-center gap-2 rounded-xl px-3 py-2 text-[13px]"
+          style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+        >
+          <Icon name="shield" size={14} style={{ color: "var(--accent)" }} />
+          <span className="flex-1">远程图片已拦截（{remoteCount} 张），未加载以保护隐私</span>
+          <button
+            onClick={() => setShowRemote(true)}
+            className="pressable font-semibold"
+            style={{ color: "var(--accent)" }}
+          >
+            加载远程图片
+          </button>
+        </div>
+      )}
+
       {/* 正文 */}
       <div className="mail-content flex-1 overflow-y-auto px-5 py-4 text-[15px] leading-relaxed" style={{ color: "var(--fg)" }}>
-        {mail.html ? (
-          <div dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(rewriteInlineImages(mail.html, mail.id, mail.attachments)) }} />
+        {mail.html && !showText ? (
+          <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
         ) : (
           <pre className="whitespace-pre-wrap font-sans text-[15px]" style={{ color: "var(--fg)" }}>
             {mail.text || "(无内容)"}
           </pre>
         )}
       </div>
+
+      {/* 底部操作栏：纯文本切换 + 回复/转发 */}
+      {(onReply || onForward || mail.html) && (
+        <div
+          className="flex items-center gap-2 border-t px-5 py-2.5"
+          style={{ borderColor: "var(--separator)" }}
+        >
+          {mail.html && (
+            <button
+              onClick={() => setShowText((v) => !v)}
+              className="pressable flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium"
+              style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+              title={showText ? "查看 HTML 内容" : "查看纯文本内容"}
+            >
+              <Icon name={showText ? "eye" : "file"} size={14} />
+              {showText ? "HTML" : "纯文本"}
+            </button>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            {onReply && (
+              <button
+                onClick={() => onReply(mail)}
+                className="pressable flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-semibold"
+                style={{ background: "rgba(0,168,118,0.12)", color: "var(--accent)" }}
+                title="回复发件人"
+              >
+                <Icon name="reply" size={14} />
+                回复
+              </button>
+            )}
+            {onForward && (
+              <button
+                onClick={() => onForward(mail)}
+                className="pressable flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-semibold"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                title="转发邮件"
+              >
+                <Icon name="forward" size={14} />
+                转发
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 全屏查看 */}
+      {fullscreen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col"
+          style={{ background: "var(--bg-secondary)" }}
+        >
+          <div
+            className="flex h-12 shrink-0 items-center justify-between px-4"
+            style={{ background: "var(--glass)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid var(--separator)" }}
+          >
+            <span className="truncate text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
+              {mail.subject || "(无主题)"}
+            </span>
+            <button
+              onClick={() => setFullscreen(false)}
+              className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+              style={{ background: "var(--fill)", color: "var(--fg)" }}
+              aria-label="退出全屏"
+            >
+              <Icon name="minimize" size={17} />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {mail.html && !showText ? (
+              <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+            ) : (
+              <pre className="whitespace-pre-wrap font-sans text-[15px]" style={{ color: "var(--fg)" }}>
+                {mail.text || "(无内容)"}
+              </pre>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  return content;
 }
 
 function SentView({ sent, onDelete }: { sent: any[]; onDelete: (id: number) => void }) {

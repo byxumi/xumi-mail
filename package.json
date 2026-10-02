@@ -22,6 +22,7 @@
     "@opennextjs/cloudflare": "^1.20.7",
     "framer-motion": "^13.5.0",
     "jose": "^6.1.0",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.49.0",
     "mimetext": "^3.0.28",
     "postal-mime": "^2.7.6",

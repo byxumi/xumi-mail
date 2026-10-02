@@ -23,6 +23,7 @@ export default function AccountPage() {
 
   // 自动回复
   const [autoReply, setAutoReply] = useState<any | null>(null);
+  const [autoName, setAutoName] = useState("");
   const [autoSubject, setAutoSubject] = useState("");
   const [autoMessage, setAutoMessage] = useState("");
   const [autoSourcePrefix, setAutoSourcePrefix] = useState("");
@@ -66,6 +67,7 @@ export default function AccountPage() {
         .then((r) => {
           if (r) {
             setAutoReply(r);
+            setAutoName(r.name || "");
             setAutoSubject(r.subject || "");
             setAutoMessage(r.message || "");
             setAutoSourcePrefix(r.source_prefix || "");
@@ -91,6 +93,7 @@ export default function AccountPage() {
     try {
       await api.saveAutoReply({
         source_prefix: autoSourcePrefix,
+        name: autoName,
         subject: autoSubject,
         message: autoMessage,
         enabled: autoEnabled,
@@ -299,6 +302,12 @@ export default function AccountPage() {
                     onChange={(e) => setAutoSourcePrefix(e.target.value)}
                     placeholder="来源过滤（如 /@example\\.com$/ 或留空全部）"
                     className="ios-input mt-3"
+                  />
+                  <input
+                    value={autoName}
+                    onChange={(e) => setAutoName(e.target.value)}
+                    placeholder="回复人名称（默认 Xumi Mail）"
+                    className="ios-input mt-2"
                   />
                   <input
                     value={autoSubject}

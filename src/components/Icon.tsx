@@ -99,6 +99,7 @@ import {
   SendHorizontal,
   Reply,
   ReplyAll,
+  Forward,
   Share2,
   Smartphone,
   Wifi,
@@ -114,6 +115,12 @@ import {
   ListFilter,
   Mailbox,
   Settings2,
+  ChevronUp,
+  Maximize2,
+  Minimize2,
+  Square,
+  SquareCheck,
+  FileDown,
 } from "lucide-react";
 
 export type IconName =
@@ -128,9 +135,10 @@ export type IconName =
   | "shield-off" | "bug" | "wrench" | "languages" | "database" | "users" | "trending" | "flame"
   | "activity" | "folder" | "folder-open" | "file" | "message" | "home" | "package" | "rocket"
   | "shield-check" | "map-pin" | "calendar" | "timer" | "power" | "save" | "pencil" | "list"
-  | "image" | "bold" | "italic" | "code" | "quote" | "send-h" | "reply" | "reply-all" | "share"
+  | "image" | "bold" | "italic" | "code" | "quote" | "send-h" | "reply" | "reply-all" | "forward" | "share"
   | "smartphone" | "wifi" | "phone" | "badge-check" | "check-check" | "log-in" | "mail-open"
-  | "mail-warning" | "rotate-ccw" | "clock-arrow" | "list-filter" | "mailbox" | "settings-2";
+  | "mail-warning" | "rotate-ccw" | "clock-arrow" | "list-filter" | "mailbox" | "settings-2"
+  | "chevron-up" | "maximize" | "minimize" | "square" | "square-check" | "file-down";
 
 const iconMap: Record<IconName, any> = {
   inbox: Inbox,
@@ -228,6 +236,7 @@ const iconMap: Record<IconName, any> = {
   "send-h": SendHorizontal,
   reply: Reply,
   "reply-all": ReplyAll,
+  forward: Forward,
   share: Share2,
   smartphone: Smartphone,
   wifi: Wifi,
@@ -242,6 +251,12 @@ const iconMap: Record<IconName, any> = {
   "list-filter": ListFilter,
   mailbox: Mailbox,
   "settings-2": Settings2,
+  "chevron-up": ChevronUp,
+  maximize: Maximize2,
+  minimize: Minimize2,
+  square: Square,
+  "square-check": SquareCheck,
+  "file-down": FileDown,
 };
 
 export function Icon({

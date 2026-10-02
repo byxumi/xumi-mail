@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
@@ -34,10 +35,30 @@ export default function SendPage() {
   const [sentList, setSentList] = useState<any[]>([]);
   const [address, setAddress] = useState("");
   const [recent, setRecent] = useState<string[]>([]);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setRecent(loadRecent());
   }, []);
+
+  // 草稿预填（来自收件箱回复/转发）
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    if (!mode) return;
+    const to = searchParams.get("to") || "";
+    const subject = searchParams.get("subject") || "";
+    const body = searchParams.get("body") || "";
+    if (mode === "reply" || mode === "forward") {
+      if (to && !toMail) setToMail(to);
+      if (subject && !subject) setSubject(subject);
+      if (body && !content) {
+        setContent(body);
+        // 引用正文含 HTML 标签时自动切为 HTML 内容
+        if (/<[a-z][\s\S]*>/i.test(body)) setIsHtml(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     if (!token) return;
