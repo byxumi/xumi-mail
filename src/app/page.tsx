@@ -7,6 +7,7 @@ import { spring, springSoft, LogoPop, FadeUp, MotionList, MotionItem, HoverCard 
 import { useState } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { Announcement } from "@/components/Announcement";
+import { Icon } from "@/components/Icon";
 
 const FEATURES = [
   { icon: Zap, title: "秒级收信", desc: "邮件到达即刻解析，验证码自动提取" },
@@ -286,6 +287,26 @@ export default function HomePage() {
         style={{ borderColor: "var(--separator)", color: "var(--fg-tertiary)" }}
       >
         <span className="mono tracking-[0.08em]">XUMI MAIL</span> · 须弥邮箱 · 基于 Cloudflare Workers 构建
+        {settings?.adminContact?.trim() && (
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            <Icon name="info" size={14} />
+            <span>{settings.adminContact}</span>
+          </div>
+        )}
+        {settings?.showGithub && (
+          <div className="mt-2">
+            <a
+              href="https://github.com/byxumi/xumi-mail"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium"
+              style={{ color: "var(--accent)" }}
+            >
+              <Icon name="external" size={14} />
+              GitHub
+            </a>
+          </div>
+        )}
       </footer>
     </main>
   );
