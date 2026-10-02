@@ -195,8 +195,10 @@ export default function MailPage() {
   }, [token, loadMails, loadSent]);
 
 
-  // 每 15 秒自动刷新
+  // 每 15 秒自动刷新（可关）
+  const [autoRefresh, setAutoRefresh] = useState(true);
   useInterval(() => {
+    if (!autoRefresh) return;
     if (tab === "inbox") void loadMails();
     else void loadSent();
   }, 15000);
@@ -653,6 +655,17 @@ export default function MailPage() {
             </FadeUp>
           </div>
           <div className="flex items-center gap-3">
+            {tab === "inbox" && (
+              <button
+                onClick={() => setAutoRefresh((v) => !v)}
+                className={`pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium ${autoRefresh ? "" : "opacity-60"}`}
+                style={{ background: "var(--fill)", color: autoRefresh ? "var(--accent)" : "var(--fg-secondary)" }}
+                title={autoRefresh ? "关闭自动刷新" : "开启自动刷新"}
+              >
+                <Icon name="refresh" size={15} />
+                {autoRefresh ? "自动刷新" : "自动刷新关"}
+              </button>
+            )}
             {tab === "inbox" && (
               <button
                 onClick={() => void loadMails()}
