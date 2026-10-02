@@ -653,6 +653,18 @@ export default function MailPage() {
             </FadeUp>
           </div>
           <div className="flex items-center gap-3">
+            {tab === "inbox" && (
+              <button
+                onClick={() => void loadMails()}
+                disabled={loading}
+                className="pressable flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium disabled:opacity-40"
+                style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                title="刷新收件箱"
+              >
+                <Icon name={loading ? "loader" : "refresh"} size={15} />
+                刷新
+              </button>
+            )}
             {tab === "inbox" && unreadCount > 0 && !multiSelect && (
               <button
                 onClick={markAllRead}
