@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
     needAuth,
     adminContact: getStringValue(env.ADMIN_CONTACT),
     enableUserCreateEmail: getBooleanValue(env.ENABLE_USER_CREATE_EMAIL),
+    enableUserRegister: getBooleanValue(env.ENABLE_USER_REGISTER),
     disableAnonymousUserCreateEmail: getBooleanValue(env.DISABLE_ANONYMOUS_USER_CREATE_EMAIL),
     disableCustomAddressName: getBooleanValue(env.DISABLE_CUSTOM_ADDRESS_NAME),
     enableUserDeleteEmail: getBooleanValue(env.ENABLE_USER_DELETE_EMAIL),

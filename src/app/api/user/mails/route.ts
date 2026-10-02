@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
     const { env, payload } = await requireUser(req);
     const { searchParams } = new URL(req.url);
     const address = searchParams.get("address");
-    const limit = searchParams.get("limit") || "20";
-    const offset = searchParams.get("offset") || "0";
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "20", 10) || 20, 1), 100);
+    const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10) || 0, 0);
     if (!address) return text("缺少 address", 400);
 
     // 校验该地址属于当前用户
@@ -28,10 +28,13 @@ export async function GET(req: NextRequest) {
     const dbResult = await env.DB.prepare(
       `SELECT * FROM raw_mails where address = ? order by id desc limit ? offset ?`
     )
-      .bind(address, parseInt(limit as string), parseInt(offset as string))
+      .bind(address, limit, offset)
       .all();
+    const countRow = await env.DB.prepare(`SELECT count(*) as count FROM raw_mails WHERE address = ?`)
+      .bind(address)
+      .first<number>("count");
     const resolved = await resolveRawEmailList(dbResult.results as any[]);
-    return json({ results: resolved, count: dbResult.results.length });
+    return json({ results: resolved, count: countRow || 0 });
   } catch (e) {
     return text(e instanceof ApiError ? e.message : "服务器错误", e instanceof ApiError ? e.status : 500);
   }

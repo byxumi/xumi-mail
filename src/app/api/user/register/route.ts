@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { getEnv, json, text, ApiError, clientIp } from "@/lib/server";
+import { getBooleanValue } from "@/lib/config";
 import { signUserJwt } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** 用户注册（普通账号，非邮箱注册；验证码功能后续可扩展） */
+/** 用户注册（普通账号，非邮箱注册；受 ENABLE_USER_REGISTER 控制，默认关闭） */
 export async function POST(req: NextRequest) {
   try {
     const env = await getEnv();
+    if (!getBooleanValue(env.ENABLE_USER_REGISTER)) return text("注册功能未开启", 403);
+
     const body = (await req.json().catch(() => ({}))) as { user_email?: string; password?: string };
     const { user_email, password } = body;
     if (!user_email || !password) return text("用户名和密码不能为空", 400);

@@ -20,6 +20,7 @@
     "JWT_SECRET": "xumi-mail-jwt-secret-9f8e7d6c5b4a3f2e1d0c",
     "ENABLE_USER_CREATE_EMAIL": "true",
     "ENABLE_USER_DELETE_EMAIL": "true",
+    "ENABLE_USER_REGISTER": "true",
     "ENABLE_AUTO_REPLY": "false",
     "ENABLE_MAIL_READ_STATUS": "true",
     "ENABLE_WEBHOOK": "false",

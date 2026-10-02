@@ -17,6 +17,7 @@ export interface OpenSettingsDTO {
   needAuth: boolean;
   adminContact: string;
   enableUserCreateEmail: boolean;
+  enableUserRegister: boolean;
   disableAnonymousUserCreateEmail: boolean;
   disableCustomAddressName: boolean;
   enableUserDeleteEmail: boolean;
@@ -232,19 +233,45 @@ export const api = {
       body,
     }),
   userAddresses: () =>
-    request<{ results: Array<{ id: number; name: string; created_at: string; mail_count: number }> }>(
+    request<{ results: Array<{ id: number; name: string; created_at: string; updated_at: string; mail_count: number }> }>(
       "/api/user/addresses",
       { auth: "user" }
     ),
-  bindAddress: (body: { address_id: number }) =>
+  bindAddress: (body: { address_id?: number; address?: string }) =>
     request<{ success: boolean }>("/api/user/bind_address", { method: "POST", body, auth: "user" }),
   unbindAddress: () =>
     request<{ success: boolean }>("/api/user/bind_address", { method: "DELETE", auth: "user" }),
+  unbindAddressOne: (body: { address_id: number }) =>
+    request<{ success: boolean; deleted: number }>("/api/user/unbind_address", { method: "POST", body, auth: "user" }),
+  transferAddress: (body: { address_id: number; target_user_email: string }) =>
+    request<{ success: boolean }>("/api/user/transfer_address", { method: "POST", body, auth: "user" }),
+  bindAddressJwt: (id: number) =>
+    request<{ jwt: string; address: string; address_id: number }>(`/api/user/bind_address_jwt/${id}`, {
+      auth: "user",
+    }),
   userMails: (params: { address: string; limit?: number; offset?: number }) =>
     request<{ results: MailRowDTO[]; count: number }>(
       `/api/user/mails?address=${encodeURIComponent(params.address)}&limit=${params.limit ?? 20}&offset=${params.offset ?? 0}`,
       { auth: "user" }
     ),
+  deleteUserMail: (id: number) =>
+    request<{ success: boolean }>(`/api/user/mails/${id}`, { method: "DELETE", auth: "user" }),
+  userSendbox: (params: { address?: string; limit?: number; offset?: number }) =>
+    request<{ results: any[]; count: number }>(
+      `/api/user/sendbox?limit=${params.limit ?? 20}&offset=${params.offset ?? 0}${params.address ? `&address=${encodeURIComponent(params.address)}` : ""}`,
+      { auth: "user" }
+    ),
+  deleteUserSent: (id: number) =>
+    request<{ success: boolean }>(`/api/user/sendbox/${id}`, { method: "DELETE", auth: "user" }),
+  userSettings: () =>
+    request<{
+      user_email: string;
+      user_id: number;
+      is_admin: boolean;
+      access_token: string | null;
+      new_user_token: string | null;
+      user_role: { domains: string[]; role: string; prefix: string } | null;
+    }>("/api/user/settings", { auth: "user" }),
 
   // 兑换码（用户）
   redeem: (body: {

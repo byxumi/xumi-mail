@@ -54,6 +54,7 @@ export default function Header() {
   const navItems = [
     { href: "/mail", label: "收件箱", icon: "inbox" as const, badge: unread },
     { href: "/send", label: "发件", icon: "send" as const, badge: 0 },
+    { href: "/user", label: "用户", icon: "users" as const, badge: 0 },
     { href: "/account", label: "账号", icon: "settings" as const, badge: 0 },
     ...(settings?.enableRedeemCode
       ? [{ href: "/redeem", label: "兑换", icon: "ticket" as const, badge: 0 }]

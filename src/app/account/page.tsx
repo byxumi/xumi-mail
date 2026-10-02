@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
 import { Icon } from "@/components/Icon";
@@ -359,6 +360,9 @@ export default function AccountPage() {
                       >
                         退出用户账号
                       </button>
+                      <Link href="/user" className="btn-secondary mt-2 w-full">
+                        进入用户中心
+                      </Link>
                     </div>
                   ) : (
                     <>

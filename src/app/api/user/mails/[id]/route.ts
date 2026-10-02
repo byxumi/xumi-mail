@@ -1,16 +1,18 @@
 import { NextRequest } from "next/server";
 import { json, text, ApiError, requireUser } from "@/lib/server";
+import { getBooleanValue } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** DELETE /api/user/mails/:id —— 删除用户绑定地址下的一封邮件（UserMailBox.vue，需 ENABLE_USER_DELETE_EMAIL） */
+/** DELETE /api/user/mails/:id —— 删除用户绑定地址下的一封邮件（受 ENABLE_USER_DELETE_EMAIL 控制） */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { env, payload } = await requireUser(req);
+    if (!getBooleanValue(env.ENABLE_USER_DELETE_EMAIL)) return text("未开启用户删除邮件功能", 403);
     const { id: rawId } = await params;
     const id = Number(rawId);
     if (!Number.isSafeInteger(id) || id <= 0) return text("无效的邮件 ID", 400);

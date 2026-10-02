@@ -35,15 +35,7 @@ export async function POST(req: NextRequest) {
       .first<{ id: number }>();
     if (!target) return text("目标用户不存在", 404);
 
-    // 目标用户不能已有绑定地址（一个用户同一时间只绑定一个地址）
-    const targetBound = await env.DB.prepare(
-      `SELECT 1 FROM users_address WHERE user_id = ?`
-    )
-      .bind(target.id)
-      .first();
-    if (targetBound) return text("目标用户已绑定地址，请先让其解绑", 400);
-
-    // 转移：从当前用户删除绑定，写入目标用户
+    // 转移：从当前用户删除绑定，写入目标用户（多地址语义：目标无需先解绑）
     await env.DB.prepare(`DELETE FROM users_address WHERE user_id = ? AND address_id = ?`)
       .bind(payload.user_id, addressId)
       .run();
