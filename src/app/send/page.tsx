@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
@@ -102,6 +103,12 @@ export default function SendPage() {
             <Icon name="send" size={28} />
           </div>
           <p className="mt-4 text-[16px]">请先创建邮箱地址后再发件</p>
+          <Link
+            href="/mail"
+            className="btn-primary mt-5 inline-block min-w-[180px] text-center"
+          >
+            去创建地址
+          </Link>
         </div>
       </div>
     );

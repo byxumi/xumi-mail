@@ -4,12 +4,12 @@ import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: {
-    default: "深夜信号站 · Xumi Mail",
-    template: "%s · 深夜信号站",
+    default: "须弥邮箱 · Xumi Mail",
+    template: "%s · 须弥邮箱",
   },
   description:
-    "Xumi Mail 深夜信号站 - 免费临时邮箱服务，基于 Cloudflare Workers 部署，收信即焚，隐私安全",
-  keywords: ["临时邮箱", "一次性邮箱", "Xumi Mail", "深夜信号站", "隐私邮箱"],
+    "须弥邮箱 Xumi Mail - 免费临时邮箱服务，基于 Cloudflare Workers 部署，在线接收验证码、防骚扰、保护隐私，收信即焚",
+  keywords: ["临时邮箱", "一次性邮箱", "Xumi Mail", "须弥邮箱", "隐私邮箱", "收验证码"],
   icons: {
     icon: "/favicon.ico",
     apple: "/logo-192.png",

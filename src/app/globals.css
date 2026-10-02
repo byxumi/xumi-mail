@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* ============ 深夜信号站 · 设计系统 ============
-   暗色科技 + 磷光绿 · NIGHT SIGNAL STATION
+/* ============ 须弥邮箱 · 设计系统 ============
+   暗色科技 + 磷光绿 · XUMI MAIL
    字体：Space Grotesk（UI）+ JetBrains Mono（数据/代码）自托管 */
 
 @font-face {
@@ -62,8 +62,10 @@
 }
 
 :root {
-  /* 品牌色（磷光绿） */
+  /* 品牌色（须弥绿） */
   --accent: #00a876;
+  --accent-bright: #00e08a;
+  --accent-deep: #007a58;
   --green: #00a876;
   --red: #e5484d;
   --orange: #ff9f0a;
@@ -74,29 +76,30 @@
   --pink: #ff375f;
 
   /* 背景与文字（浅色 · 冷调纸灰绿） */
-  --bg: #f4f6f5;
+  --bg: #f5f7f6;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e8edeb;
-  --fg: #16211c;
-  --fg-secondary: #5a6b62;
-  --fg-tertiary: #9aa8a0;
-  --separator: rgba(22, 45, 36, 0.12);
-  --fill: rgba(22, 45, 36, 0.08);
+  --bg-tertiary: #e9eeec;
+  --fg: #14201a;
+  --fg-secondary: #586a61;
+  --fg-tertiary: #97a69e;
+  --separator: rgba(20, 45, 35, 0.12);
+  --fill: rgba(20, 45, 35, 0.07);
 
   /* 毛玻璃 */
-  --glass: rgba(255, 255, 255, 0.72);
-  --glass-strong: rgba(255, 255, 255, 0.86);
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-strong: rgba(255, 255, 255, 0.88);
 
   /* 圆角（品牌更利落） */
-  --r-sm: 8px;
-  --r-md: 12px;
+  --r-sm: 10px;
+  --r-md: 14px;
   --r-lg: 18px;
-  --r-xl: 24px;
+  --r-xl: 26px;
 
-  /* 阴影层级（偏投影、低饱和） */
-  --shadow-sm: 0 1px 0 rgba(22, 45, 36, 0.05), 0 1px 3px rgba(22, 45, 36, 0.07);
-  --shadow-md: 0 2px 10px rgba(22, 45, 36, 0.1), 0 1px 2px rgba(22, 45, 36, 0.05);
-  --shadow-lg: 0 16px 40px rgba(8, 20, 15, 0.22), 0 4px 10px rgba(8, 20, 15, 0.08);
+  /* 阴影层级（柔投影、低饱和） */
+  --shadow-sm: 0 1px 2px rgba(17, 40, 31, 0.05), 0 1px 3px rgba(17, 40, 31, 0.06);
+  --shadow-md: 0 4px 14px rgba(17, 40, 31, 0.09), 0 1px 3px rgba(17, 40, 31, 0.05);
+  --shadow-lg: 0 18px 44px rgba(8, 24, 17, 0.18), 0 4px 12px rgba(8, 24, 17, 0.08);
+  --glow-accent: 0 8px 28px rgba(0, 168, 118, 0.32);
 
   /* 动效曲线 */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -192,7 +195,7 @@ textarea {
 }
 .glass-bar.scrolled {
   background: var(--glass-strong);
-  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 10px rgba(10, 28, 20, 0.06);
 }
 
 /* 大标题 */
@@ -210,6 +213,45 @@ textarea {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+/* 氛围网格背景（首页 hero 用） */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--grid-dot, rgba(20, 45, 35, 0.12)) 1px, transparent 0);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+}
+[data-theme="dark"] .hero-grid {
+  --grid-dot: rgba(174, 224, 199, 0.16);
+}
+
+/* 导航激活胶囊 */
+.nav-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg-secondary);
+  transition: color 0.18s ease, background 0.18s ease;
+  white-space: nowrap;
+}
+.nav-pill:hover {
+  color: var(--fg);
+  background: var(--fill);
+}
+.nav-pill.active {
+  color: var(--accent);
+  background: rgba(0, 168, 118, 0.12);
+  font-weight: 600;
 }
 
 .card-row {
@@ -257,20 +299,26 @@ textarea {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
-/* 主按钮 */
+/* 主按钮（渐变 + 高光） */
 .btn-primary {
-  background: var(--accent);
+  position: relative;
+  background: linear-gradient(135deg, var(--accent-bright) 0%, var(--accent) 55%, var(--accent-deep) 100%);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 14px 20px;
+  border-radius: 14px;
+  padding: 14px 22px;
   font-size: 17px;
   font-weight: 600;
-  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 18px rgba(0, 168, 118, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.12s var(--ease-spring), box-shadow 0.2s ease, filter 0.2s ease;
 }
-.btn-primary:hover { opacity: 0.88; }
+.btn-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 24px rgba(0, 168, 118, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
 .btn-primary:active { transform: scale(0.97); }
-.btn-primary:disabled { opacity: 0.4; }
+.btn-primary:disabled { opacity: 0.4; filter: saturate(0.6); }
 
 /* 次要按钮 */
 .btn-secondary {
@@ -474,9 +522,9 @@ textarea {
   opacity: 0.85;
 }
 
-/* ============ 深夜信号站新增组件 ============ */
+/* ============ 须弥邮箱新增组件 ============ */
 
-/* 状态胶囊（NIGHT / DAY 信号灯） */
+/* 状态胶囊（DARK / LIGHT 主题灯） */
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -553,6 +601,11 @@ textarea {
 }
 .list-item-in {
   animation: list-in 0.3s var(--ease-out) both;
+}
+
+/* 邮件面板（左列表右详情）超高阴影 */
+.mail-panel {
+  box-shadow: var(--shadow-sm), 0 10px 30px rgba(8, 24, 17, 0.06);
 }
 
 /* 骨架屏 */

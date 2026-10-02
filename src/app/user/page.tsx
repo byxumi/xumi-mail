@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { GroupLabel, FormRow, LoadingButton, Segmented, useCopy } from "@/components/ui";
+import { GroupLabel, FormRow, LoadingButton, Segmented, useCopy, ConfirmDialog } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { MotionPage, FadeUp, MotionList } from "@/components/motion";
 import { useToast } from "@/components/Toast";
@@ -73,6 +73,14 @@ export default function UserPage() {
   const [transferId, setTransferId] = useState<number | null>(null);
   // 当前临时邮箱名（address JWT 已生效时）
   const [currentAddr, setCurrentAddr] = useState("");
+
+  // 确认弹窗（替代 window.confirm）
+  const [confirm, setConfirm] = useState<
+    | { type: "unbind"; address: BoundAddress }
+    | { type: "del-mail"; id: number }
+    | { type: "del-sent"; id: number }
+    | null
+  >(null);
 
   const refresh = useCallback(async () => {
     if (!tokenStore.getUser()) return;
@@ -193,7 +201,6 @@ export default function UserPage() {
   };
 
   const unbindOne = async (a: BoundAddress) => {
-    if (!window.confirm(`确认解绑 ${a.name}？解绑后该地址不再属于你的账号，但地址本身不会删除。`)) return;
     setBusyId(a.id);
     try {
       await api.unbindAddressOne({ address_id: a.id });
@@ -227,7 +234,6 @@ export default function UserPage() {
   };
 
   const deleteMail = async (id: number) => {
-    if (!window.confirm("确认删除这封邮件？")) return;
     try {
       await api.deleteUserMail(id);
       setMails((prev) => prev.filter((m) => m.id !== id));
@@ -238,7 +244,6 @@ export default function UserPage() {
   };
 
   const deleteSent = async (id: number) => {
-    if (!window.confirm("确认删除这条发送记录？")) return;
     try {
       await api.deleteUserSent(id);
       setSent((prev) => prev.filter((m) => m.id !== id));
@@ -506,7 +511,7 @@ export default function UserPage() {
                         转移
                       </button>
                       <button
-                        onClick={() => unbindOne(a)}
+                        onClick={() => setConfirm({ type: "unbind", address: a })}
                         disabled={busyId === a.id}
                         className="pressable rounded-full px-3 py-1 text-[12px]"
                         style={{ background: "rgba(229,72,77,.1)", color: "var(--red)" }}
@@ -619,7 +624,7 @@ export default function UserPage() {
                                   <button onClick={() => copy(m.raw || "", "报文已复制")} className="pressable rounded-full px-3 py-1 text-[12px]" style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}>
                                     复制报文
                                   </button>
-                                  <button onClick={() => deleteMail(m.id)} className="pressable rounded-full px-3 py-1 text-[12px]" style={{ background: "rgba(229,72,77,.1)", color: "var(--red)" }}>
+                                  <button onClick={() => setConfirm({ type: "del-mail", id: m.id })} className="pressable rounded-full px-3 py-1 text-[12px]" style={{ background: "rgba(229,72,77,.1)", color: "var(--red)" }}>
                                     删除
                                   </button>
                                 </div>
@@ -641,7 +646,7 @@ export default function UserPage() {
                                     → {body?.to_mail || "未知"} · {formatTime(s.created_at)}
                                   </p>
                                 </div>
-                                <button onClick={() => deleteSent(s.id)} className="pressable shrink-0 rounded-full px-3 py-1 text-[12px]" style={{ background: "rgba(229,72,77,.1)", color: "var(--red)" }}>
+                                <button onClick={() => setConfirm({ type: "del-sent", id: s.id })} className="pressable shrink-0 rounded-full px-3 py-1 text-[12px]" style={{ background: "rgba(229,72,77,.1)", color: "var(--red)" }}>
                                   删除
                                 </button>
                               </div>
@@ -655,9 +660,54 @@ export default function UserPage() {
           </>
         )}
         <p className="mt-4 px-4 text-center text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
-          深夜信号站 v1.0 · 用户中心
+          须弥邮箱 v1.0 · 用户中心
         </p>
       </main>
+
+      {/* 统一确认弹窗 */}
+      <ConfirmDialog
+        open={confirm?.type === "unbind"}
+        title="解绑地址？"
+        message={
+          confirm?.type === "unbind"
+            ? `确认解绑 ${confirm.address.name}？解绑后该地址不再属于你的账号，但地址本身不会删除。`
+            : undefined
+        }
+        confirmText="解绑"
+        danger
+        onConfirm={() => {
+          const a = confirm?.type === "unbind" ? confirm.address : null;
+          setConfirm(null);
+          if (a) void unbindOne(a);
+        }}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm?.type === "del-mail"}
+        title="删除这封邮件？"
+        message="邮件将从服务器删除，不可恢复。"
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          const id = confirm?.type === "del-mail" ? confirm.id : null;
+          setConfirm(null);
+          if (id != null) void deleteMail(id);
+        }}
+        onCancel={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm?.type === "del-sent"}
+        title="删除这条发送记录？"
+        message="记录将从服务器删除，不可恢复。"
+        confirmText="删除"
+        danger
+        onConfirm={() => {
+          const id = confirm?.type === "del-sent" ? confirm.id : null;
+          setConfirm(null);
+          if (id != null) void deleteSent(id);
+        }}
+        onCancel={() => setConfirm(null)}
+      />
     </MotionPage>
   );
 }

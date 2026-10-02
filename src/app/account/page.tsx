@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { GroupLabel, FormRow, LoadingButton, Switch, useCopy } from "@/components/ui";
+import { GroupLabel, FormRow, LoadingButton, Switch, useCopy, ConfirmDialog } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
@@ -49,6 +49,7 @@ export default function AccountPage() {
   const [showWebhook, setShowWebhook] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showUser, setShowUser] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -156,7 +157,6 @@ export default function AccountPage() {
   };
 
   const deleteAddress = async () => {
-    if (!window.confirm(`确认删除地址 ${address}？其所有邮件将一并删除，不可恢复。`)) return;
     try {
       await api.deleteAddress();
       clear();
@@ -173,7 +173,7 @@ export default function AccountPage() {
         <FadeUp>
           <h1 className="large-title">账号</h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
-            深夜信号站设置
+            须弥邮箱设置
           </p>
         </FadeUp>
 
@@ -193,7 +193,12 @@ export default function AccountPage() {
                 </div>
                 <button
                   onClick={() => copy(address, "地址已复制")}
-                  className="pressable rounded-full bg-[#00a876] px-4 py-1.5 text-[13px] font-semibold text-white"
+                  className="pressable rounded-full px-4 py-1.5 text-[13px] font-semibold text-white"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, var(--accent-bright) 0%, var(--accent) 60%, var(--accent-deep) 100%)",
+                    boxShadow: "0 2px 8px rgba(0,168,118,0.35)",
+                  }}
                 >
                   复制
                 </button>
@@ -412,11 +417,24 @@ export default function AccountPage() {
                 danger
                 iconName="trash"
                 label="删除当前地址"
-                onClick={deleteAddress}
+                onClick={() => setConfirmDelete(true)}
               />
             </div>
+            {/* 删除确认弹窗 */}
+            <ConfirmDialog
+              open={confirmDelete}
+              title="删除当前地址？"
+              message={`地址 ${address} 及其所有邮件将被永久删除，不可恢复。`}
+              confirmText="删除"
+              danger
+              onConfirm={() => {
+                setConfirmDelete(false);
+                void deleteAddress();
+              }}
+              onCancel={() => setConfirmDelete(false)}
+            />
             <p className="mt-4 px-4 text-center text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
-              深夜信号站 v1.0 · 数据存储在 Cloudflare
+              须弥邮箱 v1.0 · 数据存储在 Cloudflare
             </p>
           </>
         ) : (

@@ -70,39 +70,35 @@ export default function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-192.png"
-              alt="深夜信号站"
+              alt="须弥邮箱"
               className="h-7 w-7 rounded-[9px] object-cover"
               width={28}
               height={28}
             />
             <span className="text-[17px] font-semibold tracking-tight" style={{ color: "var(--fg)" }}>
-              深夜信号站
+              须弥邮箱
             </span>
           </Link>
           <span className="status-pill hidden sm:inline-flex">
             <span className="status-dot" />
-            {colorScheme === "dark" ? "NIGHT" : "DAY"}
+            {colorScheme === "dark" ? "DARK" : "LIGHT"}
           </span>
         </div>
 
         {/* 桌面端导航 */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`relative rounded-full px-4 py-1.5 text-[15px] transition-all ${
-                isActive(item.href)
-                  ? "font-semibold"
-                  : "opacity-60 hover:opacity-90"
-              }`}
-              style={isActive(item.href) ? { color: "var(--accent)" } : { color: "var(--fg)" }}
+              className={`nav-pill ${isActive(item.href) ? "active" : ""}`}
+              style={isActive(item.href) ? { color: "var(--accent)" } : undefined}
             >
               <Icon name={item.icon} size={16} />
               {item.label}
               {item.badge > 0 && (
                 <span
-                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                  className="flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
                   style={{ background: "var(--red)" }}
                 >
                   {item.badge > 99 ? "99+" : item.badge}
@@ -136,7 +132,11 @@ export default function Header() {
             <Link
               href="/mail"
               className="pressable hidden rounded-full px-4 py-1.5 text-[14px] font-semibold text-white sm:block"
-              style={{ background: "var(--accent)" }}
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--accent-bright) 0%, var(--accent) 60%, var(--accent-deep) 100%)",
+                boxShadow: "0 2px 8px rgba(0,168,118,0.35)",
+              }}
             >
               开始使用
             </Link>

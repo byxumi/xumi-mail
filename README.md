@@ -2,6 +2,10 @@
 
 基于 [cloudflare_temp_email](https://github.com/dreamhunter2333/cloudflare_temp_email) 重构的临时邮箱系统。
 
+> 📖 **使用文档**：[USAGE.md](./USAGE.md)（面向使用者的快速上手、收件/发件/账号/兑换码/常见问题）
+>
+> 🌐 **线上地址**：https://xumi-mail.wanyang3077.workers.dev
+
 **核心变化：** 仅使用**一个 Cloudflare Worker** 即可部署前后端与收信，前后端同构于 **Next.js (App Router)**，数据库用 **Cloudflare D1**。
 
 ## 特性

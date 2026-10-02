@@ -46,7 +46,10 @@ export default function HomePage() {
   return (
     <main className="overflow-hidden" style={{ minHeight: "100vh" }}>
       {/* Hero */}
-      <section className="relative px-6 pb-14 pt-16 text-center sm:pt-24">
+      <section className="relative overflow-hidden px-6 pb-14 pt-16 text-center sm:pt-24">
+        {/* 氛围网格 */}
+        <div className="hero-grid" />
+
         {/* 背景光斑（缓慢浮动） */}
         <motion.div
           className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[820px] -translate-x-1/2 rounded-full opacity-40 blur-3xl"
@@ -59,16 +62,25 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl">
-          <LogoPop>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-512.png"
-              alt="深夜信号站"
-              width={96}
-              height={96}
-              className="mx-auto h-24 w-24 rounded-[28px] object-cover shadow-[0_20px_60px_rgba(0,168,118,0.30)]"
+          {/* Logo 光环 */}
+          <div className="relative mx-auto inline-block">
+            <motion.div
+              className="pointer-events-none absolute -inset-5 rounded-full opacity-70 blur-2xl"
+              animate={{ opacity: [0.45, 0.75, 0.45] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              style={{ background: "radial-gradient(closest-side, rgba(0,224,138,0.5), transparent 70%)" }}
             />
-          </LogoPop>
+            <LogoPop>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-512.png"
+                alt="须弥邮箱"
+                width={96}
+                height={96}
+                className="relative h-24 w-24 rounded-[28px] object-cover shadow-[0_20px_60px_rgba(0,168,118,0.35)]"
+              />
+            </LogoPop>
+          </div>
 
           <motion.p
             className="mono mt-8 text-[12px] font-semibold tracking-[0.18em]"
@@ -77,7 +89,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springSoft, delay: 0.08 }}
           >
-            XUMI MAIL · NIGHT SIGNAL STATION
+            XUMI MAIL · TEMPORARY MAILBOX
           </motion.p>
 
           <motion.h1
@@ -87,7 +99,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...springSoft, delay: 0.12 }}
           >
-            深夜信号站
+            须弥邮箱
           </motion.h1>
 
           <motion.p
@@ -149,7 +161,7 @@ export default function HomePage() {
             <MotionItem key={f.title}>
               <HoverCard
                 className="rounded-3xl p-5 text-left shadow-sm backdrop-blur"
-                style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
               >
                 <motion.div
                   className="flex h-11 w-11 items-center justify-center rounded-[14px]"
@@ -183,7 +195,7 @@ export default function HomePage() {
             <FadeUp key={s.no} delay={i * 0.1}>
               <HoverCard
                 className="relative rounded-3xl p-5"
-                style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
                 whileHover={{ y: -4 }}
               >
                 <span className="text-[12px] font-bold tracking-widest" style={{ color: "var(--accent)" }}>
@@ -232,11 +244,11 @@ export default function HomePage() {
             transition={springSoft}
             style={{
               background: "linear-gradient(135deg, rgba(0,224,138,0.10), rgba(0,168,118,0.14))",
-              border: "0.5px solid var(--separator)",
+              border: "1px solid var(--separator)",
             }}
           >
             <h2 className="text-[24px] font-bold tracking-tight" style={{ color: "var(--fg)" }}>
-              深夜信号已就绪
+              全新邮箱地址，即刻就绪
             </h2>
             <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
               无需注册，10 秒内创建你的第一个临时邮箱地址
@@ -259,7 +271,7 @@ export default function HomePage() {
         className="border-t pb-8 pt-6 text-center text-[13px]"
         style={{ borderColor: "var(--separator)", color: "var(--fg-tertiary)" }}
       >
-        <span className="mono tracking-[0.08em]">XUMI MAIL</span> · 深夜信号站 · 基于 Cloudflare Workers 构建
+        <span className="mono tracking-[0.08em]">XUMI MAIL</span> · 须弥邮箱 · 基于 Cloudflare Workers 构建
       </footer>
     </main>
   );
@@ -270,7 +282,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <motion.div
       className="rounded-2xl overflow-hidden"
-      style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+      style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}

@@ -1,7 +1,7 @@
 {
-  "name": "深夜信号站 · Xumi Mail",
-  "short_name": "深夜信号站",
-  "description": "免费临时邮箱服务，收信即焚，隐私安全",
+  "name": "须弥邮箱 · Xumi Mail",
+  "short_name": "须弥邮箱",
+  "description": "免费临时邮箱服务，在线接收验证码、防骚扰，收信即焚，隐私安全",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0f0d",

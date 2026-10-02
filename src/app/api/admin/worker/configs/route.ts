@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const domains = getDomains(env);
     return json({
       DEFAULT_LANG: getStringValue(env.DEFAULT_LANG) || "zh",
-      TITLE: getStringValue(env.TITLE) || "Xumi Mail",
+      TITLE: getStringValue(env.TITLE) || "须弥邮箱",
       HAS_PASSWORD: getPasswords(env).length > 0,
       HAS_ADMIN_PASSWORDS: getAdminPasswords(env).length > 0,
       ANNOUNCEMENT: getStringValue(env.ANNOUNCEMENT),
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       ENABLE_REDEEM_CODE: getBooleanValue(env.ENABLE_REDEEM_CODE),
       REDEEM_CODE_URL: getStringValue(env.REDEEM_CODE_URL),
       ENABLE_AUTO_REPLY: getBooleanValue(env.ENABLE_AUTO_REPLY),
-      COPYRIGHT: getStringValue(env.COPYRIGHT) || "Xumi Mail",
+      COPYRIGHT: getStringValue(env.COPYRIGHT) || "须弥邮箱",
       ENABLE_WEBHOOK: getBooleanValue(env.ENABLE_WEBHOOK),
       S3_ENABLED: !!(env as any).S3,
       VERSION: "v0.0.9",

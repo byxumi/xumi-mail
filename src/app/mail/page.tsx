@@ -18,6 +18,7 @@ export default function MailPage() {
 
   const [inbox, setInbox] = useState<ParsedMailDTO[]>([]);
   const [count, setCount] = useState(0);
+  const [myAddress, setMyAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
@@ -30,6 +31,9 @@ export default function MailPage() {
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<null | { type: "delete-mail" | "clear-inbox" | "delete-sent"; id?: number }>(null);
+
+  // 上一次邮件总数（用于自动刷新时发现新邮件）
+  const prevCountRef = useRef(0);
 
   const unreadCount = useMemo(() => inbox.filter((m) => m.is_unread === 1).length, [inbox]);
 
@@ -67,6 +71,12 @@ export default function MailPage() {
       const res = await api.parsedMails({ limit: 100, offset: 0 });
       setInbox(res.results);
       setCount(res.count);
+      if (res.results[0]?.address) setMyAddress(res.results[0].address);
+      // 自动刷新时发现新邮件 → 提示（首次加载不提示）
+      if (prevCountRef.current > 0 && res.count > prevCountRef.current) {
+        push("success", `收到 ${res.count - prevCountRef.current} 封新邮件`);
+      }
+      prevCountRef.current = res.count;
     } catch (e) {
       push("error", (e as Error).message);
       if ((e as any)?.status === 401) clearToken();
@@ -90,9 +100,15 @@ export default function MailPage() {
     if (token) {
       void loadMails();
       void loadSent();
+      // 当前地址（收件箱为空时也能显示）
+      api
+        .addressSettings()
+        .then((s) => setMyAddress(s.address))
+        .catch(() => {});
     } else {
       setInbox([]);
       setSelectedId(null);
+      setMyAddress("");
     }
   }, [token, loadMails, loadSent]);
 
@@ -119,7 +135,8 @@ export default function MailPage() {
         enableRandomSubdomain: randomSub,
       });
       setToken(res.jwt);
-      push("success", `创建成功`);
+      setMyAddress(res.address);
+      push("success", `地址已创建：${res.address}`);
       await loadMails();
     } catch (e) {
       push("error", (e as Error).message);
@@ -370,7 +387,7 @@ export default function MailPage() {
 
         {/* 地址胶囊 */}
         <div className="mt-4">
-          <AddressChip address={token ? (inbox[0]?.address || "") : ""} onCopy={copy} />
+          <AddressChip address={myAddress} onCopy={copy} />
         </div>
 
         {tab === "inbox" && (
@@ -383,6 +400,7 @@ export default function MailPage() {
           <InboxView
             inbox={searchFiltered}
             loading={loading}
+            searchActive={search.trim().length > 0}
             selectedId={selectedId}
             onSelect={(id) => {
               setSelectedId(id);
@@ -462,7 +480,7 @@ function AddressChip({ address, onCopy }: { address: string; onCopy: (t: string,
     <button
       onClick={() => onCopy(address, "地址已复制")}
       className="pressable flex w-full items-center justify-between rounded-2xl px-4 py-3 md:w-auto md:min-w-[380px]"
-      style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--separator)" }}
+      style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
       title="点击复制"
     >
       <span className="flex items-center gap-2 truncate text-[15px] font-medium" style={{ color: "var(--fg)" }}>
@@ -482,6 +500,7 @@ function AddressChip({ address, onCopy }: { address: string; onCopy: (t: string,
 function InboxView({
   inbox,
   loading,
+  searchActive,
   selectedId,
   onSelect,
   onDelete,
@@ -494,6 +513,7 @@ function InboxView({
 }: {
   inbox: ParsedMailDTO[];
   loading: boolean;
+  searchActive: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
   onDelete: (id: number) => void;
@@ -509,16 +529,20 @@ function InboxView({
   return (
     <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
       {/* 邮件列表 */}
-      <div className="card-group max-h-[calc(100vh-190px)] lg:h-[calc(100vh-200px)]">
+      <div className="card-group mail-panel max-h-[calc(100vh-190px)] overflow-hidden lg:h-[calc(100vh-200px)]">
         {loading && inbox.length === 0 ? (
           <div className="flex justify-center py-20">
             <Spinner size={28} />
           </div>
         ) : inbox.length === 0 ? (
           <EmptyState
-            iconName="inbox"
-            title="暂无邮件"
-            description="地址已就绪，去注册网站收一封测试邮件吧"
+            iconName={searchActive ? "search" : "inbox"}
+            title={searchActive ? "没有匹配的邮件" : "暂无邮件"}
+            description={
+              searchActive
+                ? "换个关键词试试，或清除搜索条件"
+                : "地址已就绪，去注册网站收一封测试邮件吧"
+            }
           />
         ) : (
           <ul className="h-full overflow-y-auto">
@@ -542,7 +566,7 @@ function InboxView({
       </div>
 
       {/* 邮件详情（桌面常驻） */}
-      <div className="card-group hidden min-h-[320px] overflow-hidden lg:block lg:h-[calc(100vh-200px)]">
+      <div className="card-group mail-panel hidden min-h-[320px] overflow-hidden lg:block lg:h-[calc(100vh-200px)]">
         <AnimatePresence mode="wait" initial={false}>
           {!selectedMail ? (
             <motion.div
@@ -648,14 +672,24 @@ function MailListItem({
     >
       <motion.button
         onClick={onClick}
-        className={`card-row w-full text-left ${active ? "active" : ""}`}
+        className={`card-row relative w-full overflow-hidden text-left ${active ? "active" : ""}`}
         whileHover={{ backgroundColor: "var(--bg-tertiary)" }}
         transition={{ duration: 0.12 }}
       >
+        {/* 未读左侧强调条 */}
+        {isUnread && (
+          <span
+            className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full"
+            style={{ background: "var(--accent)", boxShadow: "0 0 8px rgba(0,168,118,0.6)" }}
+          />
+        )}
         {/* 头像 */}
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[16px] font-semibold text-white"
-          style={{ background: avatarColor(sender.email || sender.name) }}
+          style={{
+            background: avatarColor(sender.email || sender.name),
+            boxShadow: isUnread ? "0 0 0 2px var(--bg-secondary), 0 0 0 3.5px rgba(0,168,118,0.45)" : undefined,
+          }}
         >
           {(sender.name || sender.email || "?").charAt(0).toUpperCase()}
         </span>
@@ -763,7 +797,17 @@ function MailDetail({
 
         {/* 邮件元信息 */}
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
-          <span>收件人：{mail.address}</span>
+          <span className="flex items-center gap-1">
+            收件人：
+            <button
+              onClick={() => onCopy(mail.address, "收件地址已复制")}
+              className="pressable font-medium"
+              style={{ color: "var(--accent)" }}
+              title="复制收件地址"
+            >
+              {mail.address}
+            </button>
+          </span>
           <span>来源：{mail.source}</span>
         </div>
       </div>

@@ -69,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             onClick={() => dismiss(t.id)}
             className={`toast-item pointer-events-auto ${t.leaving ? "leave" : ""}`}
-            style={{ background: "var(--glass)", color: colors[t.type], border: "0.5px solid var(--separator)" }}
+            style={{ background: "var(--glass)", color: colors[t.type], border: "1px solid var(--separator)" }}
           >
             <span className="mr-1 flex items-center">
               {(() => {
