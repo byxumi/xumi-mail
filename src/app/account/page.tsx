@@ -194,6 +194,34 @@ export default function AccountPage() {
     }
   };
 
+  const [confirmClearInbox, setConfirmClearInbox] = useState(false);
+  const [confirmClearSent, setConfirmClearSent] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
+  const clearInbox = async () => {
+    setClearing(true);
+    try {
+      await api.clearInbox();
+      push("success", "收件箱已清空");
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const clearSentItems = async () => {
+    setClearing(true);
+    try {
+      await api.clearSentItems();
+      push("success", "已发送已清空");
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setClearing(false);
+    }
+  };
+
   // 生成客户端接入配置文本（SMTP/IMAP 代理 + JWT）
   const buildClientConfigText = (): string => {
     const proxy = settings?.smtpImapProxyConfig as any;
@@ -531,12 +559,48 @@ export default function AccountPage() {
             <GroupLabel>账户操作</GroupLabel>
             <div className="card-group">
               <FormRow
+                iconName="inbox"
+                label="清空收件箱"
+                onClick={() => setConfirmClearInbox(true)}
+              />
+              <FormRow
+                iconName="send"
+                label="清空已发送"
+                onClick={() => setConfirmClearSent(true)}
+              />
+              <FormRow
                 danger
                 iconName="trash"
                 label="删除当前地址"
                 onClick={() => setConfirmDelete(true)}
               />
             </div>
+            {/* 清空收件箱确认弹窗 */}
+            <ConfirmDialog
+              open={confirmClearInbox}
+              title="清空收件箱？"
+              message="所有邮件将被删除，不可恢复。"
+              confirmText="清空"
+              danger
+              onConfirm={() => {
+                setConfirmClearInbox(false);
+                void clearInbox();
+              }}
+              onCancel={() => setConfirmClearInbox(false)}
+            />
+            {/* 清空已发送确认弹窗 */}
+            <ConfirmDialog
+              open={confirmClearSent}
+              title="清空已发送？"
+              message="所有已发送邮件记录将被删除，不可恢复。"
+              confirmText="清空"
+              danger
+              onConfirm={() => {
+                setConfirmClearSent(false);
+                void clearSentItems();
+              }}
+              onCancel={() => setConfirmClearSent(false)}
+            />
             {/* 删除确认弹窗 */}
             <ConfirmDialog
               open={confirmDelete}
