@@ -334,6 +334,20 @@ export const api = {
       body: { password },
       auth: "admin",
     }),
+  adminUserRoles: () => request<{ results: any[] }>("/api/admin/user_roles", { auth: "admin" }),
+  adminSetUserRole: (userId: number, roleText: string) =>
+    request<{ success: boolean }>("/api/admin/user_roles", {
+      method: "POST",
+      body: { user_id: userId, role_text: roleText },
+      auth: "admin",
+    }),
+  adminUserBindAddress: (userId: number) =>
+    request<{ results: Array<{ id: number; name: string; mail_count: number; send_count: number }> }>(
+      `/api/admin/users/bind_address/${userId}`,
+      { auth: "admin" }
+    ),
+  adminCreateUser: (body: { email: string; password: string }) =>
+    request<{ success: boolean }>("/api/admin/users", { method: "POST", body, auth: "admin" }),
   adminResetUserPassword: (id: number, password: string) =>
     request<{ success: boolean }>(`/api/admin/users/${id}/reset_password`, {
       method: "POST",

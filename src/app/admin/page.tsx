@@ -218,6 +218,7 @@ export default function AdminPage() {
               setPwdInput("");
               setConfirmAction({ type: "reset-user-pwd", id: u.id, name: u.user_email });
             }}
+            onRefresh={loadAll}
           />
         )}
         {tab === "redeem" && <RedeemAdminView />}
@@ -602,49 +603,197 @@ function AddressesAdmin({ addresses, onRefresh, onDelete, onClearInbox, onClearS
 }
 
 /* ---------- 用户管理 ---------- */
-function UsersView({ users, onDelete, onResetPassword }: { users: any[]; onDelete: (u: any) => void; onResetPassword: (u: any) => void }) {
+function UsersView({
+  users,
+  onDelete,
+  onResetPassword,
+  onRefresh,
+}: {
+  users: any[];
+  onDelete: (u: any) => void;
+  onResetPassword: (u: any) => void;
+  onRefresh?: () => void;
+}) {
+  const { push } = useToast();
+  const [roles, setRoles] = useState<any[]>([]);
+  const [roleEdits, setRoleEdits] = useState<Record<number, string>>({});
+  const [expanded, setExpanded] = useState<Record<number, any[]>>({});
+  const [expanding, setExpanding] = useState<Record<number, boolean>>({});
+  const [newEmail, setNewEmail] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    api
+      .adminUserRoles()
+      .then((res) => setRoles(res.results || []))
+      .catch(() => setRoles([]));
+  }, []);
+
+  const setRole = async (userId: number, roleText: string) => {
+    try {
+      await api.adminSetUserRole(userId, roleText);
+      push("success", "角色已更新");
+      setRoleEdits((prev) => ({ ...prev, [userId]: roleText }));
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  };
+
+  const toggleExpand = async (user: any) => {
+    if (expanded[user.id]) {
+      setExpanded((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
+      return;
+    }
+    if (!user.address_count) return;
+    setExpanding((prev) => ({ ...prev, [user.id]: true }));
+    try {
+      const res = await api.adminUserBindAddress(user.id);
+      setExpanded((prev) => ({ ...prev, [user.id]: res.results || [] }));
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setExpanding((prev) => ({ ...prev, [user.id]: false }));
+    }
+  };
+
+  const createUser = async () => {
+    if (!newEmail.trim() || !newPwd) {
+      push("error", "请输入邮箱和密码");
+      return;
+    }
+    setCreating(true);
+    try {
+      await api.adminCreateUser({ email: newEmail.trim(), password: newPwd });
+      push("success", "用户已创建");
+      setNewEmail("");
+      setNewPwd("");
+      onRefresh?.();
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
-    <div className="card-group mt-5">
-      {users.length === 0 ? (
-        <EmptyState iconName="users" title="暂无用户" />
-      ) : (
-        <ul>
-          {users.map((user) => (
-            <li key={user.id} className="card-row">
-              <Avatar text={user.user_email || "?"} size={36} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
-                  {user.user_email}
-                </p>
-                <p className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
-                  {formatTime(user.created_at)} · 绑定 {user.address_count || 0} 个地址
-                  {user.role ? ` · ${user.role}` : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => onResetPassword(user)}
-                  title="重置密码"
-                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
-                  style={{ background: "var(--fill)" }}
-                >
-                  <Icon name="key" size={15} />
-                </button>
-                <button
-                  onClick={() => onDelete(user)}
-                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
-                  style={{ background: "var(--fill)", color: "var(--red)" }}
-                >
-                  <Icon name="trash" size={15} />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="mt-5">
+      <div className="card-group flex flex-wrap items-center gap-2 p-3">
+        <input
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="新用户邮箱"
+          className="ios-input flex-1"
+        />
+        <input
+          type="password"
+          value={newPwd}
+          onChange={(e) => setNewPwd(e.target.value)}
+          placeholder="密码（至少 6 位）"
+          className="ios-input w-36"
+        />
+        <button
+          onClick={createUser}
+          disabled={creating}
+          className="pressable shrink-0 rounded-xl px-4 py-2.5 text-[15px] font-medium text-white"
+          style={{ background: "var(--accent)", opacity: creating ? 0.6 : 1 }}
+        >
+          {creating ? "创建中…" : "创建用户"}
+        </button>
+      </div>
+      <div className="card-group mt-3">
+        {users.length === 0 ? (
+          <EmptyState iconName="users" title="暂无用户" />
+        ) : (
+          <ul>
+            {users.map((user) => (
+              <li key={user.id} className="card-row flex-col items-stretch">
+                <div className="flex items-center gap-2">
+                  <Avatar text={user.user_email || "?"} size={36} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                      {user.user_email}
+                    </p>
+                    <p className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                      {formatTime(user.created_at)} · 绑定 {user.address_count || 0} 个地址
+                      {user.role_text ? ` · ${user.role_text}` : ""}
+                    </p>
+                  </div>
+                  {roles.length > 0 && (
+                    <select
+                      value={roleEdits[user.id] ?? user.role_text ?? ""}
+                      onChange={(e) => setRole(user.id, e.target.value)}
+                      className="pressable rounded-lg px-2 py-1.5 text-[12px] outline-none"
+                      style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
+                    >
+                      <option value="">无角色</option>
+                      {roles.map((r) => (
+                        <option key={r.role} value={r.role}>
+                          {r.role}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={() => toggleExpand(user)}
+                    disabled={!user.address_count || expanding[user.id]}
+                    title="查看绑定地址"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px] disabled:opacity-40"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    <Icon name={expanded[user.id] ? "chevron-up" : "chevron-down"} size={15} />
+                  </button>
+                  <button
+                    onClick={() => onResetPassword(user)}
+                    title="重置密码"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    <Icon name="key" size={15} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(user)}
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)", color: "var(--red)" }}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </div>
+                {expanded[user.id] && (
+                  <div className="mt-2 rounded-xl p-2" style={{ background: "var(--bg-tertiary)" }}>
+                    {expanded[user.id].length === 0 ? (
+                      <p className="px-2 py-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                        该用户暂无绑定地址
+                      </p>
+                    ) : (
+                      <ul>
+                        {expanded[user.id].map((addr) => (
+                          <li key={addr.id} className="flex items-center justify-between gap-2 px-2 py-1.5">
+                            <span className="truncate text-[13px]" style={{ color: "var(--fg)" }}>
+                              {addr.name}
+                            </span>
+                            <span className="text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                              收 {addr.mail_count} · 发 {addr.send_count}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
+
 
 /* ---------- 兑换码管理 ---------- */
 type RedeemTypeKey = "role" | "send_balance" | "address_prefix_once";
