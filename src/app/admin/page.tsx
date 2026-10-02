@@ -36,7 +36,8 @@ export default function AdminPage() {
   const [cleanup, setCleanup] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-user" | "delete-address"; id?: number; name?: string }>(null);
+  const [confirmAction, setConfirmAction] = useState<null | { type: "delete-user" | "delete-address" | "clear-inbox" | "clear-sent" | "reset-address-pwd" | "reset-user-pwd"; id?: number; name?: string }>(null);
+  const [pwdInput, setPwdInput] = useState("");
 
   useEffect(() => {
     if (tokenStore.getAdmin()) {
@@ -201,12 +202,22 @@ export default function AdminPage() {
               setAddresses(a.results || []);
             }}
             onDelete={(addr) => setConfirmAction({ type: "delete-address", id: addr.id, name: addr.name })}
+            onClearInbox={(addr) => setConfirmAction({ type: "clear-inbox", id: addr.id, name: addr.name })}
+            onClearSent={(addr) => setConfirmAction({ type: "clear-sent", id: addr.id, name: addr.name })}
+            onResetPassword={(addr) => {
+              setPwdInput("");
+              setConfirmAction({ type: "reset-address-pwd", id: addr.id, name: addr.name });
+            }}
           />
         )}
         {tab === "users" && (
           <UsersView
             users={users}
             onDelete={(u) => setConfirmAction({ type: "delete-user", id: u.id, name: u.user_email })}
+            onResetPassword={(u) => {
+              setPwdInput("");
+              setConfirmAction({ type: "reset-user-pwd", id: u.id, name: u.user_email });
+            }}
           />
         )}
         {tab === "redeem" && <RedeemAdminView />}
@@ -314,6 +325,88 @@ export default function AdminPage() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
+      {/* 清空收件箱确认 */}
+      <ConfirmDialog
+        open={confirmAction?.type === "clear-inbox"}
+        title="确认清空该地址的收件箱？"
+        message={confirmAction?.name ? `地址：${confirmAction.name}` : undefined}
+        confirmText="清空"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) {
+            void (async () => {
+              try {
+                await api.adminClearInbox(confirmAction.id!);
+                push("success", "收件箱已清空");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      {/* 清空已发送确认 */}
+      <ConfirmDialog
+        open={confirmAction?.type === "clear-sent"}
+        title="确认清空该地址的已发送？"
+        message={confirmAction?.name ? `地址：${confirmAction.name}` : undefined}
+        confirmText="清空"
+        danger
+        onConfirm={() => {
+          if (confirmAction?.id != null) {
+            void (async () => {
+              try {
+                await api.adminClearSentItems(confirmAction.id!);
+                push("success", "已发送已清空");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+      {/* 重置密码（地址/用户共用） */}
+      <ConfirmDialog
+        open={confirmAction?.type === "reset-address-pwd" || confirmAction?.type === "reset-user-pwd"}
+        title={confirmAction?.type === "reset-address-pwd" ? "重置地址密码" : "重置用户密码"}
+        message={confirmAction?.name ? `对象：${confirmAction.name}（至少 6 位）` : undefined}
+        confirmText="重置"
+        onConfirm={() => {
+          const id = confirmAction?.id;
+          if (id != null && pwdInput.length >= 6) {
+            void (async () => {
+              try {
+                if (confirmAction?.type === "reset-address-pwd") {
+                  await api.adminResetAddressPassword(id, pwdInput);
+                } else {
+                  await api.adminResetUserPassword(id, pwdInput);
+                }
+                push("success", "密码已重置");
+              } catch (e) {
+                push("error", (e as Error).message);
+              }
+            })();
+          }
+          setConfirmAction(null);
+          setPwdInput("");
+        }}
+        onCancel={() => {
+          setConfirmAction(null);
+          setPwdInput("");
+        }}
+      >
+        <input
+          type="text"
+          value={pwdInput}
+          onChange={(e) => setPwdInput(e.target.value)}
+          placeholder="新密码（至少 6 位）"
+          className="ios-input mt-2"
+        />
+      </ConfirmDialog>
     </MotionPage>
   );
 }
@@ -413,7 +506,7 @@ function MailsView({
 }
 
 /* ---------- 地址管理 ---------- */
-function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; onRefresh: () => void; onDelete: (a: any) => void }) {
+function AddressesAdmin({ addresses, onRefresh, onDelete, onClearInbox, onClearSent, onResetPassword }: { addresses: any[]; onRefresh: () => void; onDelete: (a: any) => void; onClearInbox: (a: any) => void; onClearSent: (a: any) => void; onResetPassword: (a: any) => void }) {
   const { push } = useToast();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -465,13 +558,40 @@ function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; 
                     {formatTime(addr.created_at)} · {addr.mail_count || 0} 封
                   </p>
                 </div>
-                <button
-                  onClick={() => onDelete(addr)}
-                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
-                  style={{ background: "var(--fill)" }}
-                >
-                  <Icon name="trash" size={15} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onClearInbox(addr)}
+                    title="清空收件箱"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    <Icon name="inbox" size={15} />
+                  </button>
+                  <button
+                    onClick={() => onClearSent(addr)}
+                    title="清空已发送"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    <Icon name="send" size={15} />
+                  </button>
+                  <button
+                    onClick={() => onResetPassword(addr)}
+                    title="重置地址密码"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)" }}
+                  >
+                    <Icon name="key" size={15} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(addr)}
+                    title="删除地址"
+                    className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                    style={{ background: "var(--fill)", color: "var(--red)" }}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -482,7 +602,7 @@ function AddressesAdmin({ addresses, onRefresh, onDelete }: { addresses: any[]; 
 }
 
 /* ---------- 用户管理 ---------- */
-function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => void }) {
+function UsersView({ users, onDelete, onResetPassword }: { users: any[]; onDelete: (u: any) => void; onResetPassword: (u: any) => void }) {
   return (
     <div className="card-group mt-5">
       {users.length === 0 ? (
@@ -501,13 +621,23 @@ function UsersView({ users, onDelete }: { users: any[]; onDelete: (u: any) => vo
                   {user.role ? ` · ${user.role}` : ""}
                 </p>
               </div>
-              <button
-                onClick={() => onDelete(user)}
-                className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
-                style={{ background: "var(--fill)" }}
-              >
-                <Icon name="trash" size={15} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onResetPassword(user)}
+                  title="重置密码"
+                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                  style={{ background: "var(--fill)" }}
+                >
+                  <Icon name="key" size={15} />
+                </button>
+                <button
+                  onClick={() => onDelete(user)}
+                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                  style={{ background: "var(--fill)", color: "var(--red)" }}
+                >
+                  <Icon name="trash" size={15} />
+                </button>
+              </div>
             </li>
           ))}
         </ul>

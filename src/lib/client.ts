@@ -324,6 +324,24 @@ export const api = {
     ),
   adminDeleteUser: (id: number) =>
     request<{ success: boolean }>(`/api/admin/users?id=${id}`, { method: "DELETE", auth: "admin" }),
+  adminClearInbox: (id: number) =>
+    request<{ success: boolean }>(`/api/admin/clear_inbox/${id}`, { method: "DELETE", auth: "admin" }),
+  adminClearSentItems: (id: number) =>
+    request<{ success: boolean }>(`/api/admin/clear_sent_items/${id}`, { method: "DELETE", auth: "admin" }),
+  adminResetAddressPassword: (id: number, password: string) =>
+    request<{ success: boolean }>(`/api/admin/address/${id}/reset_password`, {
+      method: "POST",
+      body: { password },
+      auth: "admin",
+    }),
+  adminResetUserPassword: (id: number, password: string) =>
+    request<{ success: boolean }>(`/api/admin/users/${id}/reset_password`, {
+      method: "POST",
+      body: { password },
+      auth: "admin",
+    }),
+  adminShowPassword: (id: number) =>
+    request<{ password: string }>(`/api/admin/show_password/${id}`, { auth: "admin" }),
   adminAutoCleanup: () => request<any>("/api/admin/auto_cleanup", { auth: "admin" }),
   saveAdminAutoCleanup: (body: any) =>
     request<{ success: boolean }>("/api/admin/auto_cleanup", { method: "POST", body, auth: "admin" }),

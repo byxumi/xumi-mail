@@ -284,6 +284,7 @@ export function ConfirmDialog({
   danger = false,
   onConfirm,
   onCancel,
+  children,
 }: {
   open: boolean;
   title: string;
@@ -293,6 +294,7 @@ export function ConfirmDialog({
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  children?: React.ReactNode;
 }) {
   if (!open) return null;
   return (
@@ -310,6 +312,7 @@ export function ConfirmDialog({
               {message}
             </p>
           )}
+          {children}
         </div>
         <div className="border-t" style={{ borderColor: "var(--separator)" }}>
           <button
