@@ -6,15 +6,17 @@ import { tokenStore } from "@/lib/client";
 import { useTheme } from "@/hooks/useTheme";
 import { useSettings } from "@/hooks/useSettings";
 import { Icon } from "@/components/Icon";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/** iOS 风格毛玻璃导航栏 */
+/** 顶部导航栏 */
 export default function Header() {
   const pathname = usePathname();
   const hasAddress = typeof window !== "undefined" && !!tokenStore.getAddress();
   const { colorScheme, toggleTheme } = useTheme();
   const { settings } = useSettings();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [unread, setUnread] = useState(0);
 
@@ -51,20 +53,39 @@ export default function Header() {
 
   const isActive = (p: string) => pathname?.startsWith(p);
 
+  // 桌面「更多」下拉：点击外部或路由变化时关闭
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [moreOpen]);
+  useEffect(() => {
+    setMoreOpen(false);
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // 主导航：只放普通用户日常功能
   const navItems = [
     { href: "/mail", label: "收件箱", icon: "inbox" as const, badge: unread },
     { href: "/send", label: "发件", icon: "send" as const, badge: 0 },
-    { href: "/user", label: "用户", icon: "users" as const, badge: 0 },
-    { href: "/account", label: "账号", icon: "settings" as const, badge: 0 },
     ...(settings?.enableRedeemCode
       ? [{ href: "/redeem", label: "兑换", icon: "ticket" as const, badge: 0 }]
       : []),
-    { href: "/admin", label: "管理", icon: "shield" as const, badge: 0 },
+    { href: "/account", label: "账号", icon: "settings" as const, badge: 0 },
+  ];
+
+  // 次级入口：移动端抽屉 / 桌面端「更多」弹出
+  const moreItems = [
+    { href: "/user", label: "用户中心", icon: "users" as const },
+    { href: "/admin", label: "管理后台", icon: "shield" as const },
   ];
 
   return (
     <header className={`glass-bar sticky top-0 z-30 ${scrolled ? "scrolled" : ""}`}>
-      <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -79,14 +100,10 @@ export default function Header() {
               须弥邮箱
             </span>
           </Link>
-          <span className="status-pill hidden sm:inline-flex">
-            <span className="status-dot" />
-            {colorScheme === "dark" ? "DARK" : "LIGHT"}
-          </span>
         </div>
 
         {/* 桌面端导航 */}
-        <nav className="hidden items-center gap-0.5 md:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -106,6 +123,41 @@ export default function Header() {
               )}
             </Link>
           ))}
+          {/* 更多 */}
+          <div className="relative ml-0.5" ref={moreRef}>
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className={`pressable flex h-8 w-8 items-center justify-center rounded-full ${moreOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+              style={{ color: "var(--fg)", background: moreOpen ? "var(--fill)" : undefined }}
+              title="更多"
+              aria-label="更多"
+            >
+              <Icon name="more" size={18} />
+            </button>
+            {moreOpen && (
+              <div
+                className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-2xl p-1 shadow-md"
+                style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
+              >
+                {moreItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px]"
+                    style={
+                      isActive(item.href)
+                        ? { color: "var(--accent)", background: "var(--fill)" }
+                        : { color: "var(--fg)" }
+                    }
+                  >
+                    <Icon name={item.icon} size={16} />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -180,6 +232,22 @@ export default function Header() {
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
+              </Link>
+            ))}
+            {moreItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px]"
+                style={
+                  isActive(item.href)
+                    ? { color: "var(--accent)", background: "var(--fill)" }
+                    : { color: "var(--fg)" }
+                }
+              >
+                <Icon name={item.icon} size={18} />
+                {item.label}
               </Link>
             ))}
             {hasAddress ? (
