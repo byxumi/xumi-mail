@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { EmptyState, LoadingButton } from "@/components/ui";
 import { Icon } from "@/components/Icon";
@@ -22,6 +22,14 @@ function loadRecent(): string[] {
 }
 
 export default function SendPage() {
+  return (
+    <Suspense fallback={null}>
+      <SendPageInner />
+    </Suspense>
+  );
+}
+
+function SendPageInner() {
   const { push } = useToast();
   const { settings } = useSettings();
   const { token } = useAddressToken();
