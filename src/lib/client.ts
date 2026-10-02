@@ -205,6 +205,8 @@ export const api = {
     content: string;
     is_html?: boolean;
   }) => request<{ status: string }>("/api/send_mail", { method: "POST", body, auth: "address" }),
+  requestSendMailAccess: () =>
+    request<{ status: string }>("/api/request_send_mail_access", { method: "POST", auth: "address" }),
   sendbox: (params: { limit?: number; offset?: number }) =>
     request<{ results: any[]; count: number }>(
       `/api/sendbox?limit=${params.limit ?? 20}&offset=${params.offset ?? 0}`,
@@ -347,6 +349,13 @@ export const api = {
     request<{ key: string; value: string[] }>(`/api/admin/blacklist?key=${key}`, { auth: "admin" }),
   saveAdminBlacklist: (body: { key: string; value: string[] }) =>
     request<{ success: boolean }>("/api/admin/blacklist", { method: "POST", body, auth: "admin" }),
+  adminSenderAccess: (params: { limit?: number; offset?: number; address?: string }) =>
+    request<any>(
+      `/api/admin/address_sender?limit=${params.limit ?? 50}&offset=${params.offset ?? 0}${params.address ? `&address=${encodeURIComponent(params.address)}` : ""}`,
+      { auth: "admin" }
+    ),
+  adminUpdateSenderAccess: (body: { address_id: number; balance: number; enabled: number }) =>
+    request<{ success: boolean }>("/api/admin/address_sender", { method: "POST", body, auth: "admin" }),
 };
 
 export const sha256Hex = async (text: string): Promise<string> => {

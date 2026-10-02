@@ -8,7 +8,7 @@ import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
 
-type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "settings";
+type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "sender" | "settings";
 
 export default function AdminPage() {
   const { push } = useToast();
@@ -123,6 +123,7 @@ export default function AdminPage() {
                 { value: "addresses", label: "地址" },
                 { value: "users", label: "用户" },
                 { value: "redeem", label: "兑换码" },
+                { value: "sender", label: "发信额度" },
                 { value: "settings", label: "清理" },
               ]}
             />
@@ -190,6 +191,7 @@ export default function AdminPage() {
           />
         )}
         {tab === "redeem" && <RedeemAdminView />}
+        {tab === "sender" && <SenderAccessView />}
         {tab === "settings" && cleanup && (
           <CleanupView
             cleanup={cleanup}
@@ -684,6 +686,141 @@ function safeParseJson(s: string): any | null {
 }
 
 /* ---------- 清理设置 ---------- */
+/* ---------- 发信额度管理 ---------- */
+function SenderAccessView() {
+  const { push } = useToast();
+  const [list, setList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [editing, setEditing] = useState<null | { id: number; address: string; balance: string; enabled: boolean }>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.adminSenderAccess({ limit: 50, offset: 0, address: query || undefined });
+      setList(res.results || []);
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [query, push]);
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const save = async () => {
+    if (!editing) return;
+    const balance = parseInt(editing.balance) || 0;
+    try {
+      await api.adminUpdateSenderAccess({
+        address_id: editing.id,
+        balance,
+        enabled: editing.enabled ? 1 : 0,
+      });
+      push("success", "已更新");
+      setEditing(null);
+      await load();
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  };
+
+  return (
+    <>
+      <div className="card-group mt-5 flex items-center gap-2 p-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void load()}
+          placeholder="按地址筛选"
+          className="ios-input"
+        />
+        <button onClick={() => void load()} className="pressable shrink-0 rounded-xl px-4 py-2.5 text-[15px] font-medium text-white" style={{ background: "var(--accent)" }}>
+          筛选
+        </button>
+      </div>
+
+      <div className="card-group mt-3">
+        {loading && list.length === 0 ? (
+          <div className="flex justify-center p-6">
+            <Spinner size={24} />
+          </div>
+        ) : list.length === 0 ? (
+          <EmptyState iconName="zap" title="暂无发信额度记录" description="用户申请发信权限后会出现在这里" />
+        ) : (
+          <ul>
+            {list.map((row) => (
+              <li key={row.id} className="card-row">
+                {editing && editing.id === row.id ? (
+                  <>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                        {row.address}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={editing.balance}
+                          onChange={(e) => setEditing({ ...editing, balance: e.target.value })}
+                          className="w-20 rounded-lg px-2 py-1 text-[13px] outline-none"
+                          style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
+                        />
+                        <Switch checked={editing.enabled} onChange={(v) => setEditing({ ...editing, enabled: v })} />
+                      </div>
+                    </div>
+                    <button onClick={() => void save()} className="pressable rounded-full px-3 py-1 text-[13px] font-medium text-white" style={{ background: "var(--accent)" }}>
+                      保存
+                    </button>
+                    <button
+                      onClick={() => setEditing(null)}
+                      className="pressable rounded-full px-3 py-1 text-[13px]"
+                      style={{ background: "var(--fill)", color: "var(--fg-secondary)" }}
+                    >
+                      取消
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold" style={{ color: "var(--fg)" }}>
+                        {row.address}
+                      </p>
+                      <p className="mt-0.5 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                        余额 {row.balance ?? 0} · {row.enabled ? "已启用" : "未启用"} · {formatTime(row.created_at)}
+                      </p>
+                    </div>
+                    <span
+                      className="mr-2 shrink-0 rounded-full px-2.5 py-1 text-[12px] font-medium"
+                      style={{
+                        background: row.enabled && (row.balance ?? 0) > 0 ? "rgba(0,168,118,0.12)" : "var(--fill)",
+                        color: row.enabled && (row.balance ?? 0) > 0 ? "var(--accent)" : "var(--fg-secondary)",
+                      }}
+                    >
+                      {row.enabled && (row.balance ?? 0) > 0 ? "可发信" : "不可发信"}
+                    </span>
+                    <button
+                      onClick={() => setEditing({ id: row.id, address: row.address, balance: String(row.balance ?? 0), enabled: !!row.enabled })}
+                      className="pressable flex h-8 w-8 items-center justify-center rounded-full"
+                      style={{ background: "var(--fill)" }}
+                      title="编辑"
+                    >
+                      <Icon name="sliders" size={15} />
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
+
 function CleanupView({
   cleanup,
   onSave,

@@ -43,6 +43,8 @@ function SendPageInner() {
   const [sentList, setSentList] = useState<any[]>([]);
   const [address, setAddress] = useState("");
   const [recent, setRecent] = useState<string[]>([]);
+  const [sendBalance, setSendBalance] = useState<number | null>(null);
+  const [requesting, setRequesting] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -72,7 +74,10 @@ function SendPageInner() {
     if (!token) return;
     api
       .addressSettings()
-      .then((s) => setAddress(s.address))
+      .then((s) => {
+        setAddress(s.address);
+        setSendBalance(s.send_balance ?? null);
+      })
       .catch(() => {});
     void loadSent();
   }, [token]);
@@ -96,6 +101,28 @@ function SendPageInner() {
     setRecent(list);
   };
 
+  const requestAccess = async () => {
+    if (requesting) return;
+    setRequesting(true);
+    try {
+      const res = await api.requestSendMailAccess();
+      if (res.status === "ok") {
+        push("success", "已申请发信权限，请等待管理员开通");
+      } else {
+        push("info", "你已申请过发信权限，请等待管理员开通");
+      }
+      // 刷新余额
+      api
+        .addressSettings()
+        .then((s) => setSendBalance(s.send_balance ?? null))
+        .catch(() => {});
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   const send = async () => {
     if (!toMail.trim() || !subject.trim() || !content.trim()) {
       push("error", "收件人、主题、内容均不能为空");
@@ -117,7 +144,12 @@ function SendPageInner() {
       setContent("");
       await loadSent();
     } catch (e) {
-      push("error", (e as Error).message);
+      const msg = (e as Error).message || "";
+      if (/余额|balance|权限/.test(msg)) {
+        push("error", `${msg}（可在上方申请发信权限）`);
+      } else {
+        push("error", msg);
+      }
     } finally {
       setSending(false);
     }
@@ -166,6 +198,32 @@ function SendPageInner() {
           <p className="mt-1 text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
             发件地址：<span className="font-medium" style={{ color: "var(--accent)" }}>{address}</span>
           </p>
+          {sendBalance !== null && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium"
+                style={{
+                  background: sendBalance > 0 ? "rgba(0,168,118,0.12)" : "var(--fill)",
+                  color: sendBalance > 0 ? "var(--accent)" : "var(--fg-secondary)",
+                  border: "1px solid var(--separator)",
+                }}
+              >
+                <Icon name="zap" size={12} />
+                发信余额 {sendBalance}
+              </span>
+              {sendBalance <= 0 && (
+                <button
+                  onClick={() => void requestAccess()}
+                  disabled={requesting}
+                  className="pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium disabled:opacity-40"
+                  style={{ background: "var(--fill)", color: "var(--accent)" }}
+                >
+                  <Icon name={requesting ? "loader" : "send"} size={12} />
+                  {requesting ? "申请中…" : "申请发信权限"}
+                </button>
+              )}
+            </div>
+          )}
         </FadeUp>
 
         {/* 表单 */}

@@ -5,6 +5,8 @@ import { Zap, ShieldCheck, Target, KeyRound, Gift, Send, Hash, Inbox, Trash2, Ma
 import { motion, AnimatePresence } from "framer-motion";
 import { spring, springSoft, LogoPop, FadeUp, MotionList, MotionItem, HoverCard } from "@/components/motion";
 import { useState } from "react";
+import { useSettings } from "@/hooks/useSettings";
+import { Announcement } from "@/components/Announcement";
 
 const FEATURES = [
   { icon: Zap, title: "秒级收信", desc: "邮件到达即刻解析，验证码自动提取" },
@@ -43,6 +45,7 @@ const FAQS = [
 ];
 
 export default function HomePage() {
+  const { settings } = useSettings();
   return (
     <main className="overflow-hidden" style={{ minHeight: "100vh" }}>
       {/* Hero */}
@@ -62,6 +65,17 @@ export default function HomePage() {
         />
 
         <div className="relative mx-auto max-w-3xl">
+          {/* 公告 */}
+          {settings?.announcement?.trim() && settings.announcement.trim().length > 0 && (
+            <motion.div
+              className="mx-auto mb-6 max-w-xl text-left"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...springSoft, delay: 0.02 }}
+            >
+              <Announcement settings={settings} />
+            </motion.div>
+          )}
           {/* Logo 光环 */}
           <div className="relative mx-auto inline-block">
             <motion.div

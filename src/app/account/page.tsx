@@ -169,6 +169,33 @@ export default function AccountPage() {
     }
   };
 
+  // 生成客户端接入配置文本（SMTP/IMAP 代理 + JWT）
+  const buildClientConfigText = (): string => {
+    const proxy = settings?.smtpImapProxyConfig as any;
+    const smtp = proxy?.smtp || {};
+    const imap = proxy?.imap || {};
+    const smtpHost = smtp.host || "-";
+    const smtpPort = smtp.port || 8025;
+    const imapHost = imap.host || "-";
+    const imapPort = imap.port || 11143;
+    const security = smtp.starttls || imap.starttls ? "STARTTLS" : "明文 / 代理 TLS";
+    return [
+      `SMTP 主机: ${smtpHost}`,
+      `SMTP 端口: ${smtpPort}`,
+      `IMAP 主机: ${imapHost}`,
+      `IMAP 端口: ${imapPort}`,
+      `安全: ${security}`,
+      `用户名: ${address || "-"}`,
+      `密码: ${token}`,
+    ].join("\n");
+  };
+
+  // 自动登录链接（携带 JWT）
+  const buildAutoLoginUrl = (): string => {
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    return `${base}/?jwt=${encodeURIComponent(token)}`;
+  };
+
   return (
     <MotionPage className="min-h-screen">
       <Header />
@@ -207,6 +234,17 @@ export default function AccountPage() {
                 </button>
               </div>
             </div>
+
+            {/* 客户端接入（SMTP / IMAP / 自动登录） */}
+            <GroupLabel>客户端接入</GroupLabel>
+            <div className="card-group">
+              <FormRow iconName="mail" label="SMTP / IMAP 客户端配置" onClick={() => copy(buildClientConfigText(), "客户端配置已复制")} />
+              <FormRow iconName="link" label="自动登录链接" onClick={() => copy(buildAutoLoginUrl(), "自动登录链接已复制")} />
+              <FormRow iconName="key" label="地址令牌（JWT）" onClick={() => copy(token, "JWT 已复制")} />
+            </div>
+            <p className="mb-4 mt-1 px-1 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              点击即可复制对应内容，用于在邮件客户端 / Agent 中接入
+            </p>
 
             {/* 进阶功能 */}
             <GroupLabel>邮箱功能</GroupLabel>

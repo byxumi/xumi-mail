@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon";
 import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings, useInterval } from "@/hooks/useSettings";
+import { Announcement } from "@/components/Announcement";
 import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex, tokenStore } from "@/lib/client";
 
 export default function MailPage() {
@@ -466,6 +467,12 @@ export default function MailPage() {
     <MotionPage className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-5xl px-3 py-4 md:px-4 md:py-6">
+        {/* 站点公告 */}
+        {tab === "inbox" && settings?.announcement?.trim() && (
+          <div className="mb-4">
+            <Announcement settings={settings} />
+          </div>
+        )}
         {/* 大标题 + 操作 */}
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
           <div>
