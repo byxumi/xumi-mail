@@ -1236,6 +1236,78 @@ function CleanupView({
         ))}
       </div>
 
+      <GroupLabel>自定义 SQL 清理（仅支持以 DELETE 开头的单条语句）</GroupLabel>
+      <div className="card-group">
+        {Array.isArray(form?.customSqlCleanupList) && form.customSqlCleanupList.length > 0 ? (
+          form.customSqlCleanupList.map((item: any, idx: number) => (
+            <div key={item.id || idx} className="card-row flex-col items-stretch gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  value={item.name || ""}
+                  onChange={(e) => {
+                    const list = [...form.customSqlCleanupList];
+                    list[idx] = { ...item, name: e.target.value };
+                    set("customSqlCleanupList", list);
+                  }}
+                  placeholder="名称（如 清理测试邮件）"
+                  className="flex-1 rounded-lg px-3 py-2 text-[13px] outline-none"
+                  style={{ background: "var(--bg-tertiary)", color: "var(--fg)" }}
+                />
+                <Switch
+                  checked={!!item.enabled}
+                  onChange={(v) => {
+                    const list = [...form.customSqlCleanupList];
+                    list[idx] = { ...item, enabled: v };
+                    set("customSqlCleanupList", list);
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const list = form.customSqlCleanupList.filter((_: any, i: number) => i !== idx);
+                    set("customSqlCleanupList", list);
+                  }}
+                  className="pressable flex h-8 w-8 items-center justify-center rounded-full text-[14px]"
+                  style={{ background: "var(--fill)", color: "var(--red)" }}
+                >
+                  <Icon name="trash" size={15} />
+                </button>
+              </div>
+              <textarea
+                value={item.sql || ""}
+                onChange={(e) => {
+                  const list = [...form.customSqlCleanupList];
+                  list[idx] = { ...item, sql: e.target.value };
+                  set("customSqlCleanupList", list);
+                }}
+                placeholder="DELETE FROM raw_mails WHERE created_at < datetime('now', '-7 days')"
+                rows={2}
+                className="w-full rounded-lg px-3 py-2 text-[12px] outline-none"
+                style={{ background: "var(--bg-tertiary)", color: "var(--fg)", fontFamily: "var(--font-mono)" }}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="card-row justify-between">
+            <span className="text-[13px]" style={{ color: "var(--fg-tertiary)" }}>
+              暂无自定义 SQL，可添加一条 DELETE 语句定期执行
+            </span>
+          </div>
+        )}
+        <div className="card-row justify-between">
+          <button
+            onClick={() => {
+              const list = Array.isArray(form?.customSqlCleanupList) ? [...form.customSqlCleanupList] : [];
+              list.push({ id: String(Date.now()), name: "", sql: "", enabled: false });
+              set("customSqlCleanupList", list);
+            }}
+            className="pressable rounded-xl px-4 py-2 text-[14px] font-medium"
+            style={{ background: "var(--fill)", color: "var(--accent)" }}
+          >
+            + 添加自定义 SQL
+          </button>
+        </div>
+      </div>
+
       <div className="mt-4 flex gap-3">
         <button onClick={() => onSave(form)} className="btn-primary flex-1">
           保存设置
