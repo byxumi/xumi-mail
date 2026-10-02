@@ -71,16 +71,15 @@ export default function Header() {
   const navItems = [
     { href: "/mail", label: "收件箱", icon: "inbox" as const, badge: unread },
     { href: "/send", label: "发件", icon: "send" as const, badge: 0 },
-    ...(settings?.enableRedeemCode
-      ? [{ href: "/redeem", label: "兑换", icon: "ticket" as const, badge: 0 }]
-      : []),
+    { href: "/user", label: "用户", icon: "users" as const, badge: 0 },
     { href: "/account", label: "账号", icon: "settings" as const, badge: 0 },
   ];
 
-  // 次级入口：移动端抽屉 / 桌面端「更多」弹出
+  // 次级入口：兑换码藏进「更多」；管理后台不提供入口（手动访问 /admin）
   const moreItems = [
-    { href: "/user", label: "用户中心", icon: "users" as const },
-    { href: "/admin", label: "管理后台", icon: "shield" as const },
+    ...(settings?.enableRedeemCode
+      ? [{ href: "/redeem", label: "兑换", icon: "ticket" as const }]
+      : []),
   ];
 
   return (
@@ -123,41 +122,43 @@ export default function Header() {
               )}
             </Link>
           ))}
-          {/* 更多 */}
-          <div className="relative ml-0.5" ref={moreRef}>
-            <button
-              onClick={() => setMoreOpen((v) => !v)}
-              className={`pressable flex h-8 w-8 items-center justify-center rounded-full ${moreOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
-              style={{ color: "var(--fg)", background: moreOpen ? "var(--fill)" : undefined }}
-              title="更多"
-              aria-label="更多"
-            >
-              <Icon name="more" size={18} />
-            </button>
-            {moreOpen && (
-              <div
-                className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-2xl p-1 shadow-md"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
+          {/* 更多（仅当有次级入口时显示） */}
+          {moreItems.length > 0 && (
+            <div className="relative ml-0.5" ref={moreRef}>
+              <button
+                onClick={() => setMoreOpen((v) => !v)}
+                className={`pressable flex h-8 w-8 items-center justify-center rounded-full ${moreOpen ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+                style={{ color: "var(--fg)", background: moreOpen ? "var(--fill)" : undefined }}
+                title="更多"
+                aria-label="更多"
               >
-                {moreItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMoreOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px]"
-                    style={
-                      isActive(item.href)
-                        ? { color: "var(--accent)", background: "var(--fill)" }
-                        : { color: "var(--fg)" }
-                    }
-                  >
-                    <Icon name={item.icon} size={16} />
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                <Icon name="more" size={18} />
+              </button>
+              {moreOpen && (
+                <div
+                  className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-2xl p-1 shadow-md"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--separator)" }}
+                >
+                  {moreItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px]"
+                      style={
+                        isActive(item.href)
+                          ? { color: "var(--accent)", background: "var(--fill)" }
+                          : { color: "var(--fg)" }
+                      }
+                    >
+                      <Icon name={item.icon} size={16} />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
