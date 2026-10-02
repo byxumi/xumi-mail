@@ -17,6 +17,7 @@ export const commonParseMail = async (rawEmail: string): Promise<ParsedEmail | u
         mimeType: att.mimeType || "application/octet-stream",
         content: new Uint8Array(att.content as ArrayBuffer | ArrayLike<number>),
         disposition: att.disposition || "attachment",
+        contentId: att.contentId || undefined,
       })),
     };
   } catch (e) {

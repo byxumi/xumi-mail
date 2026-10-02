@@ -138,6 +138,7 @@ export interface ParsedEmailAttachment {
   disposition: string;
   content?: Uint8Array;
   size?: number;
+  contentId?: string; // 邮件内联图片的 Content-ID（用于 cid: 引用解析）
 }
 
 export type ExtractResult =

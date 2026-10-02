@@ -25,6 +25,7 @@ const toParsedMailRow = async (row: Record<string, unknown>) => {
       mimeType: a.mimeType,
       disposition: a.disposition,
       size: a.content?.length ?? 0,
+      contentId: a.contentId,
     })),
   };
 };

@@ -69,7 +69,7 @@ export interface ParsedMailDTO {
   subject: string;
   text: string;
   html: string;
-  attachments: Array<{ filename: string; mimeType: string; disposition: string; size: number }>;
+  attachments: Array<{ filename: string; mimeType: string; disposition: string; size: number; contentId?: string }>;
 }
 
 export class ApiClientError extends Error {

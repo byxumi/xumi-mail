@@ -29,6 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         mimeType: a.mimeType,
         disposition: a.disposition,
         size: a.content?.length ?? 0,
+        contentId: a.contentId,
       })),
     });
   } catch (e) {

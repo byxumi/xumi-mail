@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { useAddressToken, useSettings, useInterval } from "@/hooks/useSettings";
-import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex } from "@/lib/client";
+import { api, formatTime, ParsedMailDTO, extractSender, sha256Hex, tokenStore } from "@/lib/client";
 
 export default function MailPage() {
   const { push } = useToast();
@@ -94,6 +94,21 @@ export default function MailPage() {
       // ignore
     }
   }, [token]);
+
+  // URL ?jwt= 参数自动登录（外部链接 / 邮件内直链跳转场景）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const jwtParam = params.get("jwt");
+    if (jwtParam && !token) {
+      setToken(jwtParam);
+      push("success", "已通过链接自动登录");
+      // 清理 URL，避免刷新时重复触发 / 凭据留在地址栏
+      const url = new URL(window.location.href);
+      url.searchParams.delete("jwt");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [token, setToken, push]);
 
   // token 就绪后加载
   useEffect(() => {
@@ -819,19 +834,27 @@ function MailDetail({
             附件（{mail.attachments.length}）
           </p>
           <div className="flex flex-wrap gap-2">
-            {mail.attachments.map((att, i) => (
-              <span
-                key={i}
-                className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px]"
-                style={{ borderColor: "var(--separator)", color: "var(--fg-secondary)" }}
-              >
-                <Icon name="paperclip" size={14} />
-                {att.filename}
-                <span className="text-[11px]" style={{ color: "var(--fg-tertiary)" }}>
-                  {fmtSize(att.size)}
-                </span>
-              </span>
-            ))}
+            {mail.attachments.map((att, i) => {
+              const isImage = att.mimeType?.startsWith("image/");
+              // 图片附件 → 新标签页内联预览；其他 → 直接下载
+              const href = isImage ? attachmentUrl(mail.id, i, { inline: true }) : attachmentUrl(mail.id, i);
+              return (
+                <a
+                  key={i}
+                  href={href}
+                  {...(isImage ? { target: "_blank", rel: "noopener noreferrer" } : { download: att.filename || true })}
+                  className="pressable flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[13px]"
+                  style={{ borderColor: "var(--separator)", color: "var(--fg-secondary)", cursor: "pointer" }}
+                  title={isImage ? `预览 ${att.filename}` : `下载 ${att.filename}`}
+                >
+                  <Icon name={isImage ? "image" : "paperclip"} size={14} />
+                  {att.filename}
+                  <span className="text-[11px]" style={{ color: "var(--fg-tertiary)" }}>
+                    {fmtSize(att.size)}
+                  </span>
+                </a>
+              );
+            })}
           </div>
         </div>
       )}
@@ -839,7 +862,7 @@ function MailDetail({
       {/* 正文 */}
       <div className="mail-content flex-1 overflow-y-auto px-5 py-4 text-[15px] leading-relaxed" style={{ color: "var(--fg)" }}>
         {mail.html ? (
-          <div dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(mail.html) }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtmlContent(rewriteInlineImages(mail.html, mail.id, mail.attachments)) }} />
         ) : (
           <pre className="whitespace-pre-wrap font-sans text-[15px]" style={{ color: "var(--fg)" }}>
             {mail.text || "(无内容)"}
@@ -966,6 +989,32 @@ function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+/** 附件直链（带 JWT，供 img/a 直链下载或内联显示） */
+function attachmentUrl(id: number, index: number, opts: { inline?: boolean } = {}): string {
+  const url = new URL(`/api/mail/${id}/attachment/${index}`, window.location.origin);
+  if (opts.inline) url.searchParams.set("inline", "1");
+  const token = tokenStore.getAddress();
+  if (token) url.searchParams.set("jwt", token);
+  return url.toString();
+}
+
+/** 将 HTML 内 cid:xxx 图片引用替换为附件直链（内联渲染） */
+function rewriteInlineImages(
+  html: string,
+  mailId: number,
+  attachments: ParsedMailDTO["attachments"]
+): string {
+  if (!html || !html.includes("cid:")) return html;
+  const cidIndex = new Map<string, number>();
+  attachments.forEach((a, i) => {
+    if (a.contentId) cidIndex.set(a.contentId.replace(/[<>]/g, "").trim().toLowerCase(), i);
+  });
+  return html.replace(/src\s*=\s*["']cid:([^"']+)["']/gi, (_m, cid: string) => {
+    const index = cidIndex.get(cid.trim().toLowerCase());
+    return `src="${index !== undefined ? attachmentUrl(mailId, index, { inline: true }) : ""}"`;
+  });
 }
 
 /** 简单净化 HTML */

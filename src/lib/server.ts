@@ -34,12 +34,13 @@ export async function readJson<T = any>(req: Request): Promise<T> {
   }
 }
 
-/** 解析地址 JWT（Bearer 或 x-address-token 头） */
+/** 解析地址 JWT（Bearer 或 x-address-token 头；GET 场景兜底 ?jwt= 查询参数，供附件直链使用） */
 export async function requireAddress(req: Request) {
   const env = await getEnv();
   const token =
     req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
-    req.headers.get("x-address-token");
+    req.headers.get("x-address-token") ||
+    (req.method === "GET" ? new URL(req.url).searchParams.get("jwt") : null);
   const payload = await verifyAddressJwtWithDb(env, token);
   if (!payload) throw new ApiError(401, "地址凭证无效或已过期，请重新创建地址");
   return { env, payload };
