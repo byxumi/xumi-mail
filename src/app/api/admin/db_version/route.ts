@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
     const version = (await getSetting(env, CONSTANTS.DB_VERSION_KEY)) ?? null;
     let database_size: number | null = null;
     try {
-      const row = await env.DB.prepare(`SELECT 1`).first();
-      if (row) database_size = 0;
+      const result = await env.DB.prepare(`SELECT 1`).run();
+      // D1 run() 返回 meta.size_after（数据库文件字节数）
+      database_size = (result?.meta as any)?.size_after ?? null;
     } catch {
       database_size = null;
     }

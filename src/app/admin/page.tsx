@@ -8,7 +8,7 @@ import { MotionPage, FadeUp } from "@/components/motion";
 import { useToast } from "@/components/Toast";
 import { api, formatTime, tokenStore, extractSender } from "@/lib/client";
 
-type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "sender" | "settings";
+type Tab = "stats" | "mails" | "addresses" | "users" | "redeem" | "sender" | "settings" | "db";
 
 export default function AdminPage() {
   const { push } = useToast();
@@ -124,6 +124,7 @@ export default function AdminPage() {
                 { value: "users", label: "用户" },
                 { value: "redeem", label: "兑换码" },
                 { value: "sender", label: "发信额度" },
+                { value: "db", label: "数据库" },
                 { value: "settings", label: "清理" },
               ]}
             />
@@ -192,6 +193,7 @@ export default function AdminPage() {
         )}
         {tab === "redeem" && <RedeemAdminView />}
         {tab === "sender" && <SenderAccessView />}
+        {tab === "db" && <DatabaseView />}
         {tab === "settings" && cleanup && (
           <CleanupView
             cleanup={cleanup}
@@ -819,6 +821,190 @@ function SenderAccessView() {
       </div>
     </>
   );
+}
+
+function DatabaseView() {
+  const { push } = useToast();
+  const [info, setInfo] = useState<any | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [plan, setPlan] = useState<string>("free");
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  const PLANS = [
+    { value: "free", label: "免费计划", limit: 500 * 1024 ** 2 },
+    { value: "paid", label: "付费计划", limit: 10 * 1024 ** 3 },
+  ];
+
+  const load = useCallback(async () => {
+    try {
+      const [versionRes, configRes] = await Promise.all([
+        api.adminDbVersion(),
+        api.adminConfigGet("d1_storage_plan"),
+      ]);
+      setInfo(versionRes);
+      if (configRes?.value === "free" || configRes?.value === "paid") {
+        setPlan(configRes.value);
+      }
+    } catch (e) {
+      push("error", (e as Error).message);
+    }
+  }, [push]);
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const run = async (action: "init" | "migrate") => {
+    setBusy(true);
+    try {
+      if (action === "init") await api.adminDbInitialize();
+      else await api.adminDbMigration();
+      push("success", action === "init" ? "数据库初始化完成" : "数据库迁移完成");
+      await load();
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const savePlan = async (value: string) => {
+    setSavingPlan(true);
+    try {
+      await api.adminConfigSave("d1_storage_plan", value);
+      setPlan(value);
+      push("success", "存储计划已保存");
+    } catch (e) {
+      push("error", (e as Error).message);
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const planDetail = PLANS.find((p) => p.value === plan);
+  const size = info?.database_size ?? null;
+  const usagePct = size != null && planDetail ? Math.min((size / planDetail.limit) * 100, 100) : 0;
+
+  return (
+    <>
+      <div className="card-group mt-5">
+        {info?.need_initialization && (
+          <div className="card-row justify-between border-b" style={{ borderColor: "var(--separator)" }}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold" style={{ color: "var(--red)" }}>
+                数据库尚未初始化
+              </p>
+              <p className="mt-0.5 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                首次部署需要执行初始化以创建数据表
+              </p>
+            </div>
+            <button
+              onClick={() => void run("init")}
+              disabled={busy}
+              className="pressable shrink-0 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white"
+              style={{ background: "var(--accent)" }}
+            >
+              {busy ? "执行中…" : "初始化"}
+            </button>
+          </div>
+        )}
+        {info?.need_migration && (
+          <div className="card-row justify-between border-b" style={{ borderColor: "var(--separator)" }}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold" style={{ color: "var(--amber, #f5a623)" }}>
+                数据库需要迁移
+              </p>
+              <p className="mt-0.5 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+                当前版本 {info?.current_db_version || "未知"} → 代码版本 {info?.code_db_version}
+              </p>
+            </div>
+            <button
+              onClick={() => void run("migrate")}
+              disabled={busy}
+              className="pressable shrink-0 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white"
+              style={{ background: "var(--amber, #f5a623)" }}
+            >
+              {busy ? "执行中…" : "迁移"}
+            </button>
+          </div>
+        )}
+        <div className="card-row justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
+              数据库版本
+            </p>
+            <p className="mt-0.5 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              当前 {info?.current_db_version || "未知"} · 代码 {info?.code_db_version || "未知"}
+            </p>
+          </div>
+          <span
+            className="shrink-0 rounded-full px-2.5 py-1 text-[12px] font-medium"
+            style={{
+              background: !info?.need_migration ? "rgba(0,168,118,0.12)" : "rgba(229,72,77,.1)",
+              color: !info?.need_migration ? "var(--accent)" : "var(--red)",
+            }}
+          >
+            {!info?.need_migration ? "已就绪" : "需迁移"}
+          </span>
+        </div>
+      </div>
+
+      {/* 存储计划 */}
+      <GroupLabel>存储计划</GroupLabel>
+      <div className="card-group">
+        <div className="card-row justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
+              当前计划
+            </p>
+            <p className="mt-0.5 text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              {planDetail ? planDetail.label : "未设置"} · 单库上限{" "}
+              {planDetail ? formatBytesStatic(planDetail.limit) : "—"}
+            </p>
+          </div>
+          <div className="segmented">
+            {PLANS.map((p) => (
+              <button
+                key={p.value}
+                className={plan === p.value ? "active" : ""}
+                disabled={savingPlan}
+                onClick={() => void savePlan(p.value)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {size != null && planDetail && (
+          <div className="px-5 pb-4">
+            <div className="mb-1.5 flex items-center justify-between text-[12px]" style={{ color: "var(--fg-tertiary)" }}>
+              <span>当前数据库大小</span>
+              <span>{formatBytesStatic(size)} · {usagePct.toFixed(2)}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--fill)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${usagePct}%`,
+                  background:
+                    usagePct >= 90 ? "var(--red)" : usagePct >= 75 ? "var(--amber, #f5a623)" : "var(--accent)",
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function formatBytesStatic(bytes: number): string {
+  if (!bytes || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const v = bytes / 1024 ** i;
+  return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
 }
 
 function CleanupView({

@@ -356,6 +356,27 @@ export const api = {
     ),
   adminUpdateSenderAccess: (body: { address_id: number; balance: number; enabled: number }) =>
     request<{ success: boolean }>("/api/admin/address_sender", { method: "POST", body, auth: "admin" }),
+  /** 数据库版本/初始化状态 */
+  adminDbVersion: () => request<any>("/api/admin/db_version", { auth: "admin" }),
+  /** 数据库初始化 */
+  adminDbInitialize: () =>
+    request<{ success: boolean }>("/api/admin/db_initialize", { method: "POST", auth: "admin" }),
+  /** 数据库迁移 */
+  adminDbMigration: () =>
+    request<{ success: boolean }>("/api/admin/db_migration", { method: "POST", auth: "admin" }),
+  /** 通用配置读取（key） */
+  adminConfigGet: (key: string) =>
+    request<{ key: string; value: string | null }>(
+      `/api/admin/config/${encodeURIComponent(key)}`,
+      { auth: "admin" }
+    ),
+  /** 通用配置保存 */
+  adminConfigSave: (key: string, value: string) =>
+    request<{ success: boolean }>("/api/admin/config", {
+      method: "POST",
+      body: { key, value },
+      auth: "admin",
+    }),
 };
 
 export const sha256Hex = async (text: string): Promise<string> => {
