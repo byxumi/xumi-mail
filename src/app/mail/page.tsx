@@ -343,6 +343,7 @@ export default function MailPage() {
     const params = new URLSearchParams({
       mode,
       to: target,
+      toName: mode === "reply" ? sender.name || "" : "",
       subject:
         mode === "reply"
           ? `Re: ${mail.subject || ""}`
