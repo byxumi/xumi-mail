@@ -227,18 +227,12 @@ onMounted(async () => {
                 </template>
                 <n-thing :title="row.subject">
                   <template #description>
-                    <n-tag type="info">
-                      ID: {{ row.id }}
-                    </n-tag>
-                    <n-tag type="info">
-                      {{ utcToLocalDate(row.created_at, useUTCDate) }}
-                    </n-tag>
-                    <n-tag v-if="showEMailFrom" type="info">
-                      FROM: {{ row.address }}
-                    </n-tag>
-                    <n-tag type="info">
-                      TO: {{ row.to_mail }}
-                    </n-tag>
+                    <div class="xumi-mail-meta xumi-mono">
+                      <span class="xumi-mail-meta__id">{{ row.id }}</span>
+                      <span class="xumi-mail-meta__time">{{ utcToLocalDate(row.created_at, useUTCDate) }}</span>
+                      <span v-if="showEMailFrom" class="xumi-mail-meta__addr">FROM: {{ row.address }}</span>
+                      <span class="xumi-mail-meta__addr">TO: {{ row.to_mail }}</span>
+                    </div>
                   </template>
                 </n-thing>
               </n-list-item>
@@ -248,7 +242,7 @@ onMounted(async () => {
         <template #2>
           <n-card :bordered="false" embedded v-if="curMail" class="mail-item" :title="curMail.subject"
             style="overflow: auto; max-height: 100vh;">
-            <n-space>
+            <n-space align="center" :wrap="false" style="gap: 10px; flex-wrap: wrap;">
               <n-tag type="info">
                 ID: {{ curMail.id }}
               </n-tag>
@@ -278,7 +272,7 @@ onMounted(async () => {
           <n-card :bordered="false" embedded class="mail-item" v-else>
             <n-result status="info" :title="count === 0 ? t('emptySent') : t('pleaseSelectMail')">
               <template #icon>
-                <n-icon :component="SendRound" :size="100" />
+                <n-icon :component="SendRound" :size="100" style="color: var(--xumi-accent); opacity: 0.5;" />
               </template>
             </n-result>
           </n-card>
@@ -299,18 +293,12 @@ onMounted(async () => {
           <n-list-item v-for="row in data" v-bind:key="row.id" @click="() => clickRow(row)">
             <n-thing :title="row.subject">
               <template #description>
-                <n-tag type="info">
-                  ID: {{ row.id }}
-                </n-tag>
-                <n-tag type="info">
-                  {{ utcToLocalDate(row.created_at, useUTCDate) }}
-                </n-tag>
-                <n-tag v-if="showEMailFrom" type="info">
-                  FROM: {{ row.address }}
-                </n-tag>
-                <n-tag type="info">
-                  TO: {{ row.to_mail }}
-                </n-tag>
+                <div class="xumi-mail-meta xumi-mono">
+                  <span class="xumi-mail-meta__id">{{ row.id }}</span>
+                  <span class="xumi-mail-meta__time">{{ utcToLocalDate(row.created_at, useUTCDate) }}</span>
+                  <span v-if="showEMailFrom" class="xumi-mail-meta__addr">FROM: {{ row.address }}</span>
+                  <span class="xumi-mail-meta__addr">TO: {{ row.to_mail }}</span>
+                </div>
               </template>
             </n-thing>
           </n-list-item>
@@ -320,7 +308,7 @@ onMounted(async () => {
         style="height: 80vh;">
         <n-drawer-content :title="curMail ? curMail.subject : ''" closable>
           <n-card :bordered="false" embedded style="overflow: auto;">
-            <n-space>
+            <n-space align="center" :wrap="false" style="gap: 10px; flex-wrap: wrap;">
               <n-tag type="info">
                 ID: {{ curMail.id }}
               </n-tag>

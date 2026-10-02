@@ -468,7 +468,10 @@ onMounted(loadContext)
 }
 
 .redeem-card {
-    border-radius: 10px;
+    border-radius: 16px;
+    border: 1px solid var(--xumi-border);
+    background: var(--xumi-surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 
 .heading-copy {
@@ -483,9 +486,9 @@ onMounted(loadContext)
     width: 42px;
     height: 42px;
     place-items: center;
-    color: #18a058;
+    color: var(--xumi-accent);
     font-size: 24px;
-    background: rgba(24, 160, 88, 0.12);
+    background: var(--xumi-accent-dim);
     border-radius: 8px;
 }
 
@@ -516,13 +519,13 @@ onMounted(loadContext)
     gap: 8px;
     min-width: 0;
     padding: 12px;
-    border: 1px solid rgba(128, 128, 128, 0.2);
-    border-radius: 8px;
+    border: 1px solid var(--xumi-border);
+    border-radius: 10px;
 }
 
 .type-card .n-icon {
     flex: 0 0 auto;
-    color: #18a058;
+    color: var(--xumi-accent);
     font-size: 20px;
 }
 
@@ -531,9 +534,9 @@ onMounted(loadContext)
 }
 
 .type-card.active {
-    color: #18a058;
-    border-color: rgba(24, 160, 88, 0.55);
-    background: rgba(24, 160, 88, 0.08);
+    color: var(--xumi-accent);
+    border-color: var(--xumi-accent);
+    background: var(--xumi-accent-dim);
 }
 
 .redeem-card > :deep(.n-card__content) > .n-divider {
@@ -567,7 +570,7 @@ onMounted(loadContext)
 
 .detail-heading > .n-icon {
     flex: 0 0 auto;
-    color: #18a058;
+    color: var(--xumi-accent);
     font-size: 28px;
 }
 
@@ -599,7 +602,7 @@ onMounted(loadContext)
 }
 
 .success-state > .n-icon {
-    color: #18a058;
+    color: var(--xumi-accent);
     font-size: 50px;
 }
 

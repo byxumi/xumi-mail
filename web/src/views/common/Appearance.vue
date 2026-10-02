@@ -21,7 +21,7 @@ const { t } = useScopedI18n('views.common.Appearance')
 
 <template>
     <div class="center">
-        <n-card :bordered="false" embedded>
+        <n-card :bordered="false" embedded class="xumi-panel-card">
             <n-form-item-row v-if="!isMobile" :label="t('mailboxSplitSize')">
                 <n-slider v-model:value="mailboxSplitSize" :min="0" :max="0.75" :step="0.01" :marks="{
                     0: '0',
@@ -88,5 +88,18 @@ const { t } = useScopedI18n('views.common.Appearance')
 .n-card {
     max-width: 800px;
     text-align: left;
+}
+
+.xumi-panel-card {
+    border: 1px solid var(--xumi-border);
+    border-radius: 16px;
+    background: var(--xumi-surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+.xumi-panel-card :deep(.n-form-item-label) {
+    color: var(--xumi-muted);
+    font-size: 12px;
+    letter-spacing: 0.04em;
 }
 </style>

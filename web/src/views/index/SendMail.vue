@@ -285,6 +285,10 @@ onMounted(async () => {
 .composer-card {
     width: min(900px, 100%);
     margin: 0 auto;
+    border: 1px solid var(--xumi-border);
+    border-radius: 16px;
+    background: var(--xumi-surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 
 .composer-title {
@@ -331,8 +335,8 @@ onMounted(async () => {
 
 .editor-panel {
     overflow: hidden;
-    border: 1px solid rgba(128, 128, 128, 0.24);
-    border-radius: 3px;
+    border: 1px solid var(--xumi-border);
+    border-radius: 8px;
 }
 
 .editor-panel-header {
@@ -342,7 +346,7 @@ onMounted(async () => {
     gap: 16px;
     min-height: 46px;
     padding: 6px 10px 6px 14px;
-    border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+    border-bottom: 1px solid var(--xumi-border);
 }
 
 .editor-controls {
@@ -370,15 +374,17 @@ onMounted(async () => {
 }
 
 .rich-editor {
-    background: #fff;
+    background: var(--xumi-surface);
 }
 
 .rich-editor :deep(.w-e-toolbar) {
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--xumi-border);
+    background: var(--xumi-surface);
 }
 
 .rich-editor :deep(.w-e-text-container) {
     min-height: 360px;
+    background: var(--xumi-surface);
 }
 
 .rich-editor :deep(.w-e-scroll) {
@@ -402,11 +408,13 @@ onMounted(async () => {
     gap: 16px;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid rgba(128, 128, 128, 0.18);
+    border-top: 1px solid var(--xumi-border);
 }
 
 .draft-status {
-    font-size: 13px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--xumi-muted);
 }
 
 @media (max-width: 640px) {

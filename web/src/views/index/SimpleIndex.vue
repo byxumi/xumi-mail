@@ -153,8 +153,8 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-else>
-            <n-card :bordered="false" embedded>
-                <div style="text-align: center; margin-bottom: 16px; font-size: 18px;">
+            <n-card :bordered="false" embedded class="xumi-panel">
+                <div class="xumi-hero__kicker xumi-mono" style="text-align: center; margin-bottom: 16px;">
                     <AddressSelect :showCopy="false" size="small" />
                 </div>
                 <n-flex justify="center">
@@ -192,22 +192,22 @@ onBeforeUnmount(() => {
                     </n-button>
                 </n-flex>
                 <div v-if="isFirstPage" style="text-align: center; margin-top: 12px;">
-                    <n-text depth="3" size="12">
+                    <span class="xumi-mono" style="font-size: 11px; letter-spacing: 0.08em; color: var(--xumi-muted);">
                         {{ t('refreshAfter', { msg: Math.max(0, currentAutoRefreshInterval) }) }}
-                    </n-text>
+                    </span>
                 </div>
             </n-card>
 
             <!-- 账户设置卡片 -->
-            <n-card v-if="showAccountSettingsCard" :bordered="false" embedded closable
+            <n-card v-if="showAccountSettingsCard" :bordered="false" embedded class="xumi-panel" closable
                 @close="showAccountSettingsCard = false" :title="t('mailboxSettings')">
                 <AccountSettings />
             </n-card>
 
-            <n-card v-else :bordered="false" embedded style="text-align: left;">
+            <n-card v-else :bordered="false" embedded class="xumi-panel" style="text-align: left;">
 
                 <div v-if="totalCount > 1">
-                    <n-flex justify="space-between">
+                    <n-flex justify="space-between" align="center">
                         <n-button @click="prevPage" :disabled="!canGoPrev" text size="small">
                             <template #icon>
                                 <n-icon>
@@ -216,9 +216,9 @@ onBeforeUnmount(() => {
                             </template>
                             {{ t('prevPage') }}
                         </n-button>
-                        <n-text size="small">
-                            {{ t('mailCount', { current: currentPageDisplay, total: totalCount }) }}
-                        </n-text>
+                        <span class="xumi-mailbar__status xumi-mono">
+                            {{ currentPageDisplay }} / {{ totalCount }}
+                        </span>
                         <n-button @click="nextPage" :disabled="!canGoNext" text size="small" icon-placement="right">
                             <template #icon>
                                 <n-icon>
@@ -280,8 +280,22 @@ onBeforeUnmount(() => {
     height: 7px;
     margin-right: 8px;
     border-radius: 50%;
-    background: #2080f0;
+    background: var(--xumi-accent);
+    box-shadow: 0 0 8px var(--xumi-accent);
     content: '';
     vertical-align: middle;
+}
+
+.xumi-hero__kicker {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--xumi-accent);
+}
+
+.xumi-panel {
+    border: 1px solid var(--xumi-border);
+    border-radius: 16px;
+    background: var(--xumi-surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 </style>

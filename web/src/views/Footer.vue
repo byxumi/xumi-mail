@@ -11,24 +11,43 @@ const { t } = useScopedI18n('views.Footer')
 
 <template>
     <div>
-        <n-divider class="footer-divider" />
-        <div style="text-align: center; padding: 20px">
-            <n-space justify="center">
-                <n-text depth="3">
-                    {{ t('copyright') }} © 2023-{{ new Date().getFullYear() }}
-                </n-text>
-                <n-text depth="3">
-                    <div v-html="DOMPurify.sanitize(openSettings.copyright)"></div>
-                </n-text>
-            </n-space>
+        <div class="footer-hairline" />
+        <div class="footer-body">
+            <span class="xumi-mono footer-text">
+                {{ t('copyright') }} © 2023-{{ new Date().getFullYear() }}
+            </span>
+            <span class="xumi-mono footer-sep">/</span>
+            <span class="xumi-mono footer-text" v-html="DOMPurify.sanitize(openSettings.copyright)"></span>
         </div>
     </div>
 </template>
 
 
 <style scoped>
-.footer-divider {
+.footer-hairline {
+    height: 1px;
     margin: 0;
-    padding: 0 var(--x-padding);
+    background: linear-gradient(90deg, transparent, var(--xumi-border), transparent);
+}
+
+.footer-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.footer-text {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--xumi-muted);
+}
+
+.footer-sep {
+    font-size: 10px;
+    color: var(--xumi-accent);
+    opacity: 0.6;
 }
 </style>

@@ -49,11 +49,16 @@ export default defineConfig({
         name: 'Xumi Mail',
         short_name: 'Xumi Mail',
         description: 'Xumi Mail - 免费临时邮箱，基于 Cloudflare Workers 构建',
-        theme_color: '#ffffff',
+        theme_color: '#0b0f0d',
         icons: [
           {
-            src: '/logo.png',
+            src: '/logo-192.png',
             sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/logo-512.png',
+            sizes: '512x512',
             type: 'image/png'
           }
         ]

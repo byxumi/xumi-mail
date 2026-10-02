@@ -1,0 +1,234 @@
+/* ============================================================
+   Xumi Mail design system - "深夜信号站 / Night Signal Station"
+   Dark-first dev-tool aesthetic: phosphor green accent, mono metadata,
+   editorial mono-spaced type, restrained motion.
+   ============================================================ */
+
+/* ---------- Self-hosted fonts (latin subsets; CJK falls back to system) ---------- */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Design tokens ---------- */
+:root {
+  --xumi-accent: #00a876;
+  --xumi-accent-hi: #00c08b;
+  --xumi-accent-dim: rgba(0, 168, 118, 0.12);
+  --xumi-bg: #f5f7f6;
+  --xumi-surface: #ffffff;
+  --xumi-surface-2: #eef2f0;
+  --xumi-text: #16211c;
+  --xumi-muted: #5f6f67;
+  --xumi-border: rgba(23, 47, 38, 0.13);
+  --xumi-header-bg: rgba(245, 247, 246, 0.78);
+  --xumi-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --xumi-sans: 'Space Grotesk', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+}
+
+html.dark {
+  --xumi-accent: #00e08a;
+  --xumi-accent-hi: #28f0a1;
+  --xumi-accent-dim: rgba(0, 224, 138, 0.14);
+  --xumi-bg: #0b0f0d;
+  --xumi-surface: #121816;
+  --xumi-surface-2: #171e1a;
+  --xumi-text: #e6f1eb;
+  --xumi-muted: #78887f;
+  --xumi-border: rgba(165, 192, 177, 0.16);
+  --xumi-header-bg: rgba(11, 15, 13, 0.72);
+}
+
+/* ---------- Atmosphere ---------- */
+html,
+body {
+  font-family: var(--xumi-sans);
+  background: var(--xumi-bg);
+  color: var(--xumi-text);
+  transition: background-color 0.35s ease, color 0.35s ease;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html.dark body {
+  background:
+    radial-gradient(1100px 520px at 50% -12%, rgba(0, 224, 138, 0.07), transparent 62%),
+    radial-gradient(900px 500px at 108% 8%, rgba(0, 224, 138, 0.04), transparent 55%),
+    var(--xumi-bg);
+  background-attachment: fixed;
+}
+
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -12%, rgba(0, 168, 118, 0.05), transparent 62%),
+    var(--xumi-bg);
+  background-attachment: fixed;
+}
+
+#app {
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--xumi-accent-dim);
+  color: inherit;
+}
+
+/* ---------- Thin scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--xumi-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--xumi-border);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--xumi-accent-dim);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- Utilities ---------- */
+.xumi-mono {
+  font-family: var(--xumi-mono);
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.xumi-accent-text {
+  color: var(--xumi-accent);
+}
+
+.xumi-hairline {
+  border: 0;
+  border-top: 1px solid var(--xumi-border);
+}
+
+/* Phosphor unread dot - shared across mail lists */
+.xumi-unread-dot::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--xumi-accent);
+  box-shadow: 0 0 8px var(--xumi-accent);
+  content: '';
+  vertical-align: middle;
+}
+
+/* signal-station mail metadata row (shared MailBox/SendBox) */
+.xumi-mail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--xumi-muted);
+}
+
+.xumi-mail-meta__id {
+  color: var(--xumi-accent);
+  opacity: 0.85;
+}
+
+.xumi-mail-meta__addr {
+  color: var(--xumi-muted);
+  opacity: 0.85;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xumi-mail-meta__time {
+  color: var(--xumi-muted);
+}
+
+/* toolbar status counter */
+.xumi-mailbar__status {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--xumi-accent);
+  padding: 2px 8px;
+  border: 1px solid var(--xumi-border);
+  border-radius: 999px;
+  background: var(--xumi-surface-2);
+}
+
+.xumi-mailbar__spacer {
+  flex: 1;
+}
+
+/* ---------- Motion (respects reduced-motion) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -304,7 +304,7 @@ onMounted(async () => {
                     </n-button>
                     <div v-if="openSettings.enableRedeemCode" class="redeem-entry-section">
                         <n-divider />
-                        <n-text type="info" class="redeem-entry-tip">{{ t('redeemEntryTip') }}</n-text>
+                        <span class="xumi-mono redeem-entry-tip">{{ t('redeemEntryTip') }}</span>
                         <n-button data-testid="redeem-entry" block secondary strong @click="openRedeemPage">
                             <template #icon>
                                 <n-icon :component="RedeemOutlined" />
@@ -366,7 +366,7 @@ onMounted(async () => {
                         </n-button>
                         <div v-if="openSettings.enableRedeemCode" class="redeem-entry-section">
                             <n-divider />
-                            <n-text type="info" class="redeem-entry-tip">{{ t('redeemEntryTip') }}</n-text>
+                            <span class="xumi-mono redeem-entry-tip">{{ t('redeemEntryTip') }}</span>
                             <n-button data-testid="redeem-entry-register" block secondary strong
                                 @click="openRedeemPage">
                                 <template #icon>
@@ -410,9 +410,11 @@ onMounted(async () => {
 
 .redeem-entry-tip {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
     line-height: 1.6;
     text-align: center;
+    color: var(--xumi-muted);
 }
 
 .switch-login-button {

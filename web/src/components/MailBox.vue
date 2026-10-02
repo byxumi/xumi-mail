@@ -395,26 +395,27 @@ onBeforeUnmount(() => {
             {{ t('downloadMail') }}
           </n-button>
         </n-space>
-        <n-space v-else align="center">
-          <n-button @click="multiActionModeClick(true)" type="primary" tertiary>
+        <n-space v-else align="center" :wrap="false" style="gap: 10px;">
+          <n-button @click="multiActionModeClick(true)" type="primary" tertiary size="small">
             {{ t('multiAction') }}
           </n-button>
+          <span class="xumi-mailbar__status xumi-mono">{{ count }}</span>
           <n-pagination v-model:page="page" v-model:page-size="pageSize" :item-count="count" :page-sizes="[20, 50, 100]"
-            show-size-picker />
-          <n-switch v-model:value="autoRefresh" :round="false">
+            show-size-picker size="small" />
+          <span class="xumi-mailbar__spacer"></span>
+          <n-switch v-model:value="autoRefresh" size="small" :round="false" style="margin-right: 8px;">
             <template #checked>
-              {{ t('refreshAfter', { msg: autoRefreshInterval }) }}
+              <span class="xumi-mono" style="font-size: 11px;">{{ t('refreshAfter', { msg: autoRefreshInterval }) }}</span>
             </template>
             <template #unchecked>
-              {{ t('autoRefresh') }}
+              <span class="xumi-mono" style="font-size: 11px;">{{ t('autoRefresh') }}</span>
             </template>
           </n-switch>
-          <n-button @click="backFirstPageAndRefresh" type="primary" tertiary>
+          <n-button @click="backFirstPageAndRefresh" tertiary size="small" type="primary">
             {{ t('refresh') }}
           </n-button>
           <n-input v-if="showFilterInput" v-model:value="localFilterKeyword"
-            :placeholder="t('keywordQueryTip')" style="width: 200px; display: flex; align-items: center;"
-            clearable />
+            :placeholder="t('keywordQueryTip')" size="small" clearable style="width: 160px;" />
         </n-space>
       </div>
       <n-split class="left" direction="horizontal" :max="0.75" :min="0" :resize-trigger-size="8"
@@ -434,22 +435,12 @@ onBeforeUnmount(() => {
                 </template>
                 <n-thing :title="row.subject">
                   <template #description>
-                    <n-tag type="info">
-                      ID: {{ row.id }}
-                    </n-tag>
-                    <n-tag type="info">
-                      {{ utcToLocalDate(row.created_at, useUTCDate) }}
-                    </n-tag>
-                    <n-tag type="info">
-                      <n-ellipsis style="max-width: 240px;">
-                        {{ showEMailTo ? "FROM: " + row.source : row.source }}
-                      </n-ellipsis>
-                    </n-tag>
-                    <n-tag v-if="showEMailTo" type="info">
-                      <n-ellipsis style="max-width: 240px;">
-                        TO: {{ row.address }}
-                      </n-ellipsis>
-                    </n-tag>
+                    <div class="xumi-mail-meta xumi-mono">
+                      <span class="xumi-mail-meta__id">{{ row.id }}</span>
+                      <span class="xumi-mail-meta__time">{{ utcToLocalDate(row.created_at, useUTCDate) }}</span>
+                      <span class="xumi-mail-meta__addr">{{ showEMailTo ? "FROM: " + row.source : row.source }}</span>
+                      <span v-if="showEMailTo" class="xumi-mail-meta__addr">TO: {{ row.address }}</span>
+                    </div>
                     <AiExtractInfo :metadata="row.metadata" compact />
                   </template>
                 </n-thing>
@@ -498,7 +489,7 @@ onBeforeUnmount(() => {
           <n-card :bordered="false" embedded class="mail-item" v-else>
             <n-result status="info" :title="count === 0 ? t('emptyInbox') : t('pleaseSelectMail')">
               <template #icon>
-                <n-icon :component="InboxRound" :size="100" />
+                <n-icon :component="InboxRound" :size="100" style="color: var(--xumi-accent); opacity: 0.5;" />
               </template>
             </n-result>
           </n-card>
@@ -518,25 +509,13 @@ onBeforeUnmount(() => {
                 </n-ellipsis>
               </template>
               <template #description>
-                <div class="mail-list-meta">
-                  <n-tag type="info">
-                    ID: {{ row.id }}
-                  </n-tag>
-                  <n-tag type="info">
-                    {{ utcToLocalDate(row.created_at, useUTCDate) }}
-                  </n-tag>
-                  <n-tag type="info">
-                    <n-ellipsis class="mail-list-meta-text">
-                      {{ showEMailTo ? "FROM: " + row.source : row.source }}
-                    </n-ellipsis>
-                  </n-tag>
-                  <n-tag v-if="showEMailTo" type="info">
-                    <n-ellipsis class="mail-list-meta-text">
-                      TO: {{ row.address }}
-                    </n-ellipsis>
-                  </n-tag>
-                  <AiExtractInfo :metadata="row.metadata" compact />
+                <div class="xumi-mail-meta xumi-mono">
+                  <span class="xumi-mail-meta__id">{{ row.id }}</span>
+                  <span class="xumi-mail-meta__time">{{ utcToLocalDate(row.created_at, useUTCDate) }}</span>
+                  <span class="xumi-mail-meta__addr">{{ showEMailTo ? "FROM: " + row.source : row.source }}</span>
+                  <span v-if="showEMailTo" class="xumi-mail-meta__addr">TO: {{ row.address }}</span>
                 </div>
+                <AiExtractInfo :metadata="row.metadata" compact />
               </template>
               <n-ellipsis v-if="row.text && mailListPreviewLineClampValue > 0"
                 :line-clamp="mailListPreviewLineClampValue" class="mail-list-preview" :tooltip="false">
@@ -548,14 +527,15 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div class="left" v-else>
-      <n-space justify="space-around" align="center" :wrap="false" style="display: flex; align-items: center;">
+      <n-space justify="space-between" align="center" :wrap="false" style="display: flex; align-items: center; padding: 0 10px;">
+        <span class="xumi-mailbar__status xumi-mono">{{ count }}</span>
         <n-pagination v-model:page="page" v-model:page-size="pageSize" :item-count="count" simple size="small" />
         <n-switch v-model:value="autoRefresh" size="small" :round="false">
           <template #checked>
-            {{ t('refreshAfter', { msg: autoRefreshInterval }) }}
+            <span class="xumi-mono" style="font-size: 11px;">{{ t('refreshAfter', { msg: autoRefreshInterval }) }}</span>
           </template>
           <template #unchecked>
-            {{ t('autoRefresh') }}
+            <span class="xumi-mono" style="font-size: 11px;">{{ t('autoRefresh') }}</span>
           </template>
         </n-switch>
         <n-button @click="backFirstPageAndRefresh" tertiary size="small" type="primary">
@@ -572,22 +552,12 @@ onBeforeUnmount(() => {
             :class="{ 'mail-list-unread': enableMailReadStatus && row.is_unread === 1 }">
             <n-thing :title="row.subject">
               <template #description>
-                <n-tag type="info">
-                  ID: {{ row.id }}
-                </n-tag>
-                <n-tag type="info">
-                  {{ utcToLocalDate(row.created_at, useUTCDate) }}
-                </n-tag>
-                <n-tag type="info">
-                  <n-ellipsis style="max-width: 240px;">
-                    {{ showEMailTo ? "FROM: " + row.source : row.source }}
-                  </n-ellipsis>
-                </n-tag>
-                <n-tag v-if="showEMailTo" type="info">
-                  <n-ellipsis style="max-width: 240px;">
-                    TO: {{ row.address }}
-                  </n-ellipsis>
-                </n-tag>
+                <div class="xumi-mail-meta xumi-mono">
+                  <span class="xumi-mail-meta__id">{{ row.id }}</span>
+                  <span class="xumi-mail-meta__time">{{ utcToLocalDate(row.created_at, useUTCDate) }}</span>
+                  <span class="xumi-mail-meta__addr">{{ showEMailTo ? "FROM: " + row.source : row.source }}</span>
+                  <span v-if="showEMailTo" class="xumi-mail-meta__addr">TO: {{ row.address }}</span>
+                </div>
                 <AiExtractInfo :metadata="row.metadata" compact />
               </template>
             </n-thing>
@@ -720,7 +690,8 @@ onBeforeUnmount(() => {
   height: 7px;
   margin-right: 8px;
   border-radius: 50%;
-  background: #2080f0;
+  background: var(--xumi-accent);
+  box-shadow: 0 0 8px var(--xumi-accent);
   content: '';
   vertical-align: middle;
 }

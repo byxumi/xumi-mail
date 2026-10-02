@@ -246,51 +246,51 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div>
-        <n-page-header>
-            <template #title>
-                <h3>{{ openSettings.title || t('title') }}</h3>
-            </template>
-            <template #avatar>
-                <div @click="logoClick">
-                    <n-avatar style="margin-left: 10px;" src="/logo.png" />
-                </div>
-            </template>
-            <template #extra>
-                <n-space align="center" class="header-extra">
-                    <n-menu v-if="!isMobile" mode="horizontal" :options="menuOptions" responsive />
-                    <n-button v-else :text="true" @click="showMobileMenu = !showMobileMenu">
+    <div class="xumi-header-shell">
+        <header class="xumi-header" :class="{ 'is-mobile': isMobile }">
+            <div class="xumi-header__brand" @click="logoClick">
+                <span class="xumi-header__logo-wrap">
+                    <img class="xumi-header__logo" src="/logo-192.png" alt="Xumi Mail" width="30" height="30" />
+                </span>
+                <span class="xumi-header__title">{{ openSettings.title || t('title') }}</span>
+                <span class="xumi-header__status" :title="t('status')">
+                    <span class="xumi-header__status-dot" />
+                    <span class="xumi-header__status-text xumi-mono">{{ isDark ? 'NIGHT' : 'DAY' }}</span>
+                </span>
+            </div>
+            <nav class="xumi-header__nav" aria-label="primary">
+                <n-menu v-if="!isMobile" mode="horizontal" :options="menuOptions" responsive />
+                <n-button v-else :text="true" @click="showMobileMenu = !showMobileMenu" class="xumi-header__menu-btn">
+                    <template #icon>
+                        <n-icon :component="MenuFilled" />
+                    </template>
+                    {{ t('menu') }}
+                </n-button>
+                <n-dropdown v-if="!isMobile" :options="languageOptions" @select="changeLocale" trigger="click" class="header-locale-dropdown">
+                    <n-button text size="small" class="header-locale-button" style="padding: 0 10px;">
                         <template #icon>
-                            <n-icon :component="MenuFilled" />
+                            <n-icon :component="Language" />
                         </template>
-                        {{ t('menu') }}
+                        {{ currentLocaleLabel }}
+                        <n-icon :component="KeyboardArrowDownOutlined" style="margin-left: 4px;" />
                     </n-button>
-                    <n-dropdown v-if="!isMobile" :options="languageOptions" @select="changeLocale" trigger="click" class="header-locale-dropdown">
-                        <n-button text size="small" class="header-locale-button" style="padding: 0 10px;">
-                            <template #icon>
-                                <n-icon :component="Language" />
-                            </template>
-                            {{ currentLocaleLabel }}
-                            <n-icon :component="KeyboardArrowDownOutlined" style="margin-left: 4px;" />
-                        </n-button>
-                    </n-dropdown>
-                    <n-button
-                        v-if="!isMobile && showGithubForCurrentUser"
-                        text
-                        size="small"
-                        class="header-version-button"
-                        tag="a"
-                        target="_blank"
-                        href="https://github.com/dreamhunter2333/cloudflare_temp_email"
-                    >
-                        <template #icon>
-                            <n-icon :component="GithubAlt" />
-                        </template>
-                        {{ version || 'Github' }}
-                    </n-button>
-                </n-space>
-            </template>
-        </n-page-header>
+                </n-dropdown>
+                <n-button
+                    v-if="!isMobile && showGithubForCurrentUser"
+                    text
+                    size="small"
+                    class="header-version-button"
+                    tag="a"
+                    target="_blank"
+                    href="https://github.com/dreamhunter2333/cloudflare_temp_email"
+                >
+                    <template #icon>
+                        <n-icon :component="GithubAlt" />
+                    </template>
+                    {{ version || 'Github' }}
+                </n-button>
+            </nav>
+        </header>
         <n-drawer v-model:show="showMobileMenu" placement="top" style="height: 100vh;">
             <n-drawer-content :title="t('menu')" closable>
                 <n-menu :options="menuOptions" />
@@ -331,46 +331,116 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-:deep(.n-page-header) {
+.xumi-header-shell {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.xumi-header {
+    display: flex;
     align-items: center;
-    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 16px;
+    height: 60px;
+    padding: 0 18px;
+    background: var(--xumi-header-bg);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom: 1px solid var(--xumi-border);
 }
 
-:deep(.n-page-header__main) {
-    flex: 1 1 auto;
+.xumi-header__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     min-width: 0;
-    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
 }
 
-:deep(.n-page-header__title) {
-    min-width: 0;
-    overflow: hidden;
+.xumi-header__logo-wrap {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--xumi-accent-dim);
+    border: 1px solid var(--xumi-border);
 }
 
-:deep(.n-page-header__title h3) {
+.xumi-header__logo {
+    display: block;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.xumi-header__title {
+    max-width: min(38vw, 320px);
     overflow: hidden;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--xumi-text);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-:deep(.n-page-header__extra) {
+.xumi-header__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border: 1px solid var(--xumi-border);
+    border-radius: 999px;
+    background: var(--xumi-surface-2);
+}
+
+.xumi-header__status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--xumi-accent);
+    box-shadow: 0 0 6px var(--xumi-accent);
+    animation: xumi-pulse 2.4s ease-in-out infinite;
+}
+
+.xumi-header__status-text {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--xumi-muted);
+}
+
+.xumi-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     flex: 0 0 auto;
 }
 
-.n-layout-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.xumi-header__nav :deep(.n-menu) {
+    --n-item-font-size: 14px;
+    --n-item-font-weight: 500;
+    --n-item-height: 36px;
 }
 
-.header-extra {
-    align-items: center;
-    flex-wrap: nowrap;
+.xumi-header__menu-btn {
+    font-size: 14px;
 }
 
-.header-extra :deep(.n-space-item) {
-    display: flex;
-    align-items: center;
+@keyframes xumi-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .xumi-header__status-dot {
+        animation: none;
+    }
 }
 
 .header-locale-button {
@@ -461,20 +531,19 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
-    :deep(.n-page-header) {
-        padding: 10px 12px;
+    .xumi-header {
+        height: 54px;
+        padding: 0 12px;
+        gap: 8px;
     }
 
-    :deep(.n-page-header__title) {
-        min-width: 0;
+    .xumi-header__title {
+        max-width: calc(100vw - 170px);
+        font-size: 15px;
     }
 
-    :deep(.n-page-header__title h3) {
-        max-width: calc(100vw - 104px);
-        margin: 0;
-        font-size: clamp(16px, 5vw, 20px);
-        line-height: 1.2;
+    .xumi-header__status {
+        display: none;
     }
 }
-
 </style>

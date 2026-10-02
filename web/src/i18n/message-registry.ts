@@ -1485,6 +1485,26 @@ export const MESSAGE_REGISTRY = {
       "en": "OK",
       "zh": "确定"
     },
+    "station": {
+      "en": "NIGHT SIGNAL STATION",
+      "zh": "深夜信号站"
+    },
+    "open": {
+      "en": "OPEN",
+      "zh": "在线"
+    },
+    "tagline": {
+      "en": "A temp inbox that answers before you ask.",
+      "zh": "用完即弃的临时收件箱，安静而来，安静而归。"
+    },
+    "sub": {
+      "en": "Get a disposable address in one tap. No signup, no trace, no commitment. Everything auto-expires when you don't need it anymore.",
+      "zh": "一键获取一次性邮箱地址。无需注册、不留痕迹，邮件到期自动焚毁，用完即走。"
+    },
+    "foot": {
+      "en": "100% OPEN SOURCE · MAIL LOGS AUTO-DELETED",
+      "zh": "开源项目 · 邮件到期自动焚毁"
+    },
     "userCenter": {
       "en": "User Center",
       "zh": "用户中心"
